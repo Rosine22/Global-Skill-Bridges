@@ -23,7 +23,6 @@ pids/
 
 # Build output
 /dist
-/frontend/build/
 /frontend/dist/
 /frontend/.next
 /frontend/.cache
