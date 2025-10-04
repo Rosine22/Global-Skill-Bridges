@@ -1,0 +1,41 @@
+# =====================
+# Node.js / Backend + Frontend
+# =====================
+
+# Node modules (backend + frontend)
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Environment variables
+*.env*
+
+# Build output
+/dist
+/frontend/build/
+/frontend/dist/
+/frontend/.next
+/frontend/.cache
+
+# =====================
+# IDE and OS files
+# =====================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
