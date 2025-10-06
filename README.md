@@ -3,8 +3,9 @@
 **Global Skills Bridge** is a modern web platform that connects skilled professionals, job seekers, and mentors across the globe. The platform enables users to showcase their skills, find job opportunities, and engage in mentorship programs designed to promote global career growth and collaboration.
 
  **GitHub Repository:** [https://github.com/Rosine22/Global-Skill-Bridges]  
- **Deployment Plan:** [Netlify Deployment Plan — https://global-skills-br.netlify.app/]
  **Figma design:** [ **GitHub Repository:** [https://github.com/Rosine22/Global-Skill-Bridges]    
+ **Deployment Plan:** [Netlify Deployment Plan — https://global-skills-br.netlify.app/]
+ 
 
 ---
 
