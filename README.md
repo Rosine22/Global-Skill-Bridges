@@ -1,18 +1,18 @@
-# 🌍 Global Skills Bridge
+#  Global Skills Bridge
 
 **Global Skills Bridge** is a modern web platform that connects skilled professionals, job seekers, and mentors across the globe. The platform enables users to showcase their skills, find job opportunities, and engage in mentorship programs designed to promote global career growth and collaboration.
 
-🔗 **Live Demo:** [https://global-skills-br.netlify.app/](https://global-skills-br.netlify.app/)  
-📁 **GitHub Repository:** [https://github.com/Rosine22/Global-Skill-Bridges]  
-🚀 **Deployment Plan:** [Netlify Deployment Plan — https://global-skills-br.netlify.app/]
+ **GitHub Repository:** [https://github.com/Rosine22/Global-Skill-Bridges]  
+ **Deployment Plan:** [Netlify Deployment Plan — https://global-skills-br.netlify.app/]
+ **Figma design:** [ **GitHub Repository:** [https://github.com/Rosine22/Global-Skill-Bridges]    
 
 ---
 
-## 📘 Project Overview
+##  Project Overview
 
 **Global Skills Bridge** bridges the gap between **employers, job seekers, and mentors** through a unified ecosystem that supports recruitment, career development, and skill exchange. It provides real-time job listings, mentorship scheduling, and direct messaging between users.
 
-### 👥 User Roles
+###  User Roles
 
 1. **Job Seeker**
    - Create and update a professional profile.
@@ -37,15 +37,15 @@
    - Oversee job postings and mentorship activities.
    - Handle reports and platform-level analytics.
 
-### ✨ Key Features
+###  Key Features
 
-- 🧭 **User Authentication & Profiles** — secure login and customizable skill-based profiles.  
-- 💼 **Job Matching System** — intelligent matching between job seekers and posted jobs.  
-- 🧑‍🏫 **Mentorship Portal** — mentorship scheduling and feedback tracking.  
-- 💬 **Messaging System** — direct chat between users.  
-- 🔔 **Notifications** — real-time updates for job applications, messages, and session reminders.  
-- 🧾 **Application Management** — employers can review, accept, or reject candidates.  
-- 🌐 **Responsive UI** — optimized for both desktop and mobile users.  
+-  **User Authentication & Profiles** — secure login and customizable skill-based profiles.  
+-  **Job Matching System** — intelligent matching between job seekers and posted jobs.  
+-  **Mentorship Portal** — mentorship scheduling and feedback tracking.  
+-  **Messaging System** — direct chat between users.  
+-  **Notifications** — real-time updates for job applications, messages, and session reminders.  
+-  **Application Management** — employers can review, accept, or reject candidates.  
+-  **Responsive UI** — optimized for both desktop and mobile users.  
 
 ---
 
@@ -97,7 +97,7 @@ Before you begin, ensure you have the following installed on your system:
 - **Git** - [Download here](https://git-scm.com/)
 - **MongoDB Atlas Account** (for database) - [Sign up here](https://www.mongodb.com/atlas)
 
-### 1. 🔽 Clone the Repository
+### 1.  Clone the Repository
 
 ```bash
 git clone https://github.com/Rosine22/Global-Skill-Bridges.git
@@ -177,10 +177,10 @@ npm start
 
 The backend server will run on `http://localhost:5000`
 
-**🔍 API Documentation:**
-Visit `http://localhost:5000/api/docs` for interactive Swagger API documentation.
+** API Documentation:**
+Visit `http://localhost:5000/api/docs/` for interactive Swagger API documentation.
 
-### 4. 🎨 Frontend Setup
+### 4.  Frontend Setup
 
 Open a new terminal window and navigate to the frontend directory:
 
@@ -199,7 +199,7 @@ npm install
 npm run dev
 ```
 
-The frontend application will run on `http://localhost:5173`
+The frontend application will run on `http://localhost:5173/`
 
 ### 5. 🔗 Environment Variables (Frontend)
 
@@ -210,7 +210,7 @@ Create a `.env` file in the frontend directory if needed:
 VITE_API_URL=http://localhost:5000/api
 ```
 
-### 6. 🧪 Testing the Setup
+### 6.  Testing the Setup
 
 1. **Backend Health Check:**
    - Visit `http://localhost:5000/api/health`
@@ -243,15 +243,15 @@ npm run preview  # To preview the production build locally
 
 ---
 
-## 📱 Available User Roles & Features
+## 📱Available User Roles & Features
 
-### 🔐 Authentication Endpoints
+###  Authentication Endpoints
 
 - **POST** `/api/auth/register` - Register new user
 - **POST** `/api/auth/login` - User login
 - **GET** `/api/auth/me` - Get current user profile
 
-### 👤 User Roles
+###  User Roles
 
 1. **Job Seeker (`job-seeker`)**
    - Browse and apply for jobs
@@ -284,7 +284,7 @@ npm run preview  # To preview the production build locally
 
 ---
 
-## 🔧 Development Commands
+##  Development Commands
 
 ### Backend Commands
 ```bash
@@ -304,7 +304,7 @@ npm run lint:fix   # Fix ESLint issues
 
 ---
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### Common Issues
 
@@ -333,23 +333,24 @@ npm run lint:fix   # Fix ESLint issues
 
 ---
 
-## 📚 API Documentation
+## 
+API Documentation
 
 Once your backend is running, visit:
 - **Swagger UI:** `http://localhost:5000/api/docs`
 - **Health Check:** `http://localhost:5000/api/health`
 
 The API includes comprehensive endpoints for:
-- 🔐 Authentication & User Management
-- 💼 Job Posting & Applications
-- 🎓 Mentorship System
-- 💬 Messaging & Notifications
-- 📊 Analytics & Reporting
-- ⚙️ Admin Functions
+-  Authentication & User Management
+-  Job Posting & Applications
+-  Mentorship System
+-  Messaging & Notifications
+-  Analytics & Reporting
+-  Admin Functions
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -364,16 +365,3 @@ The API includes comprehensive endpoints for:
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
-
-## 🆘 Support
-
-If you encounter any issues during setup or have questions:
-
-1. Check the [Issues](https://github.com/Rosine22/Global-Skill-Bridges/issues) page
-2. Create a new issue with detailed information about your problem
-3. Include your operating system, Node.js version, and error messages
-
----
-
-**Happy Coding! 🚀**
-
