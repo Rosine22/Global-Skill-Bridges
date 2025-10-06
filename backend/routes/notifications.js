@@ -10,9 +10,75 @@ const router = express.Router();
 // All notification routes require authentication
 router.use(protect);
 
-// @route   GET /api/notifications
-// @desc    Get all notifications for current user
-// @access  Private
+/**
+ * @swagger
+ * /api/notifications:
+ *   get:
+ *     summary: Get user notifications
+ *     description: Retrieve all notifications for the authenticated user
+ *     tags: [Notifications]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: unread
+ *         schema:
+ *           type: boolean
+ *         description: Filter for unread notifications only
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [application_update, message, job_match, mentorship_request]
+ *         description: Filter by notification type
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Maximum number of notifications to return
+ *     responses:
+ *       200:
+ *         description: Notifications retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 count:
+ *                   type: integer
+ *                   example: 5
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         example: "507f1f77bcf86cd799439011"
+ *                       type:
+ *                         type: string
+ *                         example: "application_update"
+ *                       title:
+ *                         type: string
+ *                         example: "Application Status Update"
+ *                       message:
+ *                         type: string
+ *                         example: "Your application has been reviewed"
+ *                       isRead:
+ *                         type: boolean
+ *                         example: false
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
 router.get('/', async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;

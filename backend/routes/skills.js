@@ -9,9 +9,69 @@ const router = express.Router();
 // All skills routes require authentication
 router.use(protect);
 
-// @route   GET /api/skills
-// @desc    Get all skills with categories
-// @access  Private
+/**
+ * @swagger
+ * /api/skills:
+ *   get:
+ *     summary: Get all skills
+ *     description: Retrieve all available skills with categories and levels
+ *     tags: [Skills]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *           enum: [Programming, Design, Marketing, Management, Communication, Technical, Other]
+ *         description: Filter skills by category
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search skills by name
+ *     responses:
+ *       200:
+ *         description: Skills retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 count:
+ *                   type: integer
+ *                   example: 25
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         example: "507f1f77bcf86cd799439011"
+ *                       name:
+ *                         type: string
+ *                         example: "JavaScript"
+ *                       category:
+ *                         type: string
+ *                         example: "Programming"
+ *                       description:
+ *                         type: string
+ *                         example: "Programming language for web development"
+ *                       levels:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                           enum: [Beginner, Intermediate, Advanced, Expert]
+ *                         example: ["Beginner", "Intermediate", "Advanced"]
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
 router.get("/", async (req, res, next) => {
   try {
     const { category, level, verified, search } = req.query;

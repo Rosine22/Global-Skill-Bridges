@@ -12,8 +12,73 @@ const router = express.Router();
 router.use(protect);
 router.use(authorize("rtb-admin", "admin"));
 
-// @route   GET /api/rtb/dashboard
-// @desc    Get RTB dashboard statistics
+/**
+ * @swagger
+ * /api/rtb/dashboard:
+ *   get:
+ *     summary: Get RTB dashboard statistics
+ *     description: Retrieve comprehensive statistics for Refugee Talent Bridge dashboard
+ *     tags: [RTB]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: RTB dashboard statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     participants:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: integer
+ *                           example: 250
+ *                         active:
+ *                           type: integer
+ *                           example: 180
+ *                         graduated:
+ *                           type: integer
+ *                           example: 120
+ *                         employed:
+ *                           type: integer
+ *                           example: 85
+ *                     programs:
+ *                       type: object
+ *                       properties:
+ *                         active:
+ *                           type: integer
+ *                           example: 5
+ *                         completed:
+ *                           type: integer
+ *                           example: 12
+ *                     skillsGap:
+ *                       type: object
+ *                       properties:
+ *                         highDemand:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *                           example: ["JavaScript", "Python", "Digital Marketing"]
+ *                         emergingSkills:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *                           example: ["AI/ML", "Cloud Computing", "Cybersecurity"]
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - RTB admin access required
+ *       500:
+ *         description: Server error
+ */
 // @access  Private (RTB Admin only)
 router.get("/dashboard", async (req, res, next) => {
   try {

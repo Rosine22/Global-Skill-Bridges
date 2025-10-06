@@ -12,8 +12,35 @@ const router = express.Router();
 // All user routes require authentication
 router.use(protect);
 
-// @route   GET /api/users/profile
-// @desc    Get current user profile
+/**
+ * @swagger
+ * /api/users/profile:
+ *   get:
+ *     summary: Get current user profile
+ *     description: Retrieve the authenticated user's profile information
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
 // @access  Private
 router.get('/profile', async (req, res, next) => {
   try {
@@ -31,9 +58,77 @@ router.get('/profile', async (req, res, next) => {
   }
 });
 
-// @route   PUT /api/users/profile
-// @desc    Update current user profile
-// @access  Private
+/**
+ * @swagger
+ * /api/users/profile:
+ *   put:
+ *     summary: Update user profile
+ *     description: Update the authenticated user's profile information
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: User's full name
+ *                 example: "John Doe"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: User's email address
+ *                 example: "john@example.com"
+ *               phone:
+ *                 type: string
+ *                 description: User's phone number
+ *                 example: "+1234567890"
+ *               location:
+ *                 type: object
+ *                 properties:
+ *                   city:
+ *                     type: string
+ *                     example: "New York"
+ *                   country:
+ *                     type: string
+ *                     example: "USA"
+ *               bio:
+ *                 type: string
+ *                 description: User's biography/description
+ *                 example: "Experienced software developer"
+ *               linkedinProfile:
+ *                 type: string
+ *                 description: LinkedIn profile URL
+ *                 example: "https://linkedin.com/in/johndoe"
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Profile updated successfully"
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Bad request - Validation errors
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
 router.put('/profile', [
   body('name').optional().trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
   body('email').optional().isEmail().normalizeEmail().withMessage('Valid email is required'),

@@ -6,6 +6,13 @@ const { protect, authorize, optionalAuth } = require("../middleware/auth");
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * tags:
+ *   name: Jobs
+ *   description: Job posting and management operations
+ */
+
 // Validation rules
 const jobValidation = [
   body("title")
@@ -51,6 +58,60 @@ const jobValidation = [
     .isArray({ min: 1 })
     .withMessage("At least one requirement is required"),
 ];
+
+/**
+ * @swagger
+ * /api/jobs:
+ *   get:
+ *     summary: Get all jobs with filtering and pagination
+ *     tags: [Jobs]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of jobs per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term for job titles or descriptions
+ *       - in: query
+ *         name: location
+ *         schema:
+ *           type: string
+ *         description: Filter by location
+ *       - in: query
+ *         name: jobType
+ *         schema:
+ *           type: string
+ *           enum: [full-time, part-time, contract, internship]
+ *         description: Filter by job type
+ *       - in: query
+ *         name: salaryMin
+ *         schema:
+ *           type: number
+ *         description: Minimum salary filter
+ *       - in: query
+ *         name: salaryMax
+ *         schema:
+ *           type: number
+ *         description: Maximum salary filter
+ *     responses:
+ *       200:
+ *         description: List of jobs retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PaginatedResponse'
+ */
 
 // @route   GET /api/jobs
 // @desc    Get all jobs with filtering, pagination, and search
@@ -253,6 +314,40 @@ router.get("/featured", async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/jobs/{id}:
+ *   get:
+ *     summary: Get a single job by ID
+ *     tags: [Jobs]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Job ID
+ *     responses:
+ *       200:
+ *         description: Job details retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Job'
+ *       404:
+ *         description: Job not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+
 // @route   GET /api/jobs/:id
 // @desc    Get single job by ID
 // @access  Public (with optional auth for application status)
@@ -315,6 +410,117 @@ router.get("/:id", optionalAuth, async (req, res, next) => {
     next(error);
   }
 });
+
+/**
+ * @swagger
+ * /api/jobs:
+ *   post:
+ *     summary: Create a new job posting
+ *     tags: [Jobs]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - description
+ *               - location
+ *               - company
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 200
+ *                 example: "Senior Software Developer"
+ *               description:
+ *                 type: string
+ *                 minLength: 50
+ *                 example: "We are looking for an experienced software developer..."
+ *               company:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                     example: "Tech Solutions Inc"
+ *                   website:
+ *                     type: string
+ *                     example: "https://techsolutions.com"
+ *                   logo:
+ *                     type: string
+ *                     example: "https://example.com/logo.png"
+ *               location:
+ *                 type: object
+ *                 properties:
+ *                   city:
+ *                     type: string
+ *                     example: "Kigali"
+ *                   country:
+ *                     type: string
+ *                     example: "Rwanda"
+ *                   remote:
+ *                     type: boolean
+ *                     example: false
+ *               salary:
+ *                 type: object
+ *                 properties:
+ *                   min:
+ *                     type: number
+ *                     example: 800000
+ *                   max:
+ *                     type: number
+ *                     example: 1200000
+ *                   currency:
+ *                     type: string
+ *                     example: "RWF"
+ *               jobType:
+ *                 type: string
+ *                 enum: [full-time, part-time, contract, internship]
+ *                 example: "full-time"
+ *               requirements:
+ *                 type: object
+ *                 properties:
+ *                   skills:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                     example: ["JavaScript", "Node.js", "React"]
+ *                   experience:
+ *                     type: string
+ *                     example: "3+ years"
+ *                   education:
+ *                     type: string
+ *                     example: "Bachelor's degree in Computer Science"
+ *     responses:
+ *       201:
+ *         description: Job created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Job created successfully"
+ *                 data:
+ *                   $ref: '#/components/schemas/Job'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Only employers can create jobs
+ */
 
 // @route   POST /api/jobs
 // @desc    Create new job posting

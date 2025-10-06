@@ -7,6 +7,51 @@ const { protect, authorize } = require("../middleware/auth");
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * tags:
+ *   name: Applications
+ *   description: Job application management
+ */
+
+/**
+ * @swagger
+ * /api/applications:
+ *   get:
+ *     summary: Get applications for current user
+ *     tags: [Applications]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of applications per page
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [submitted, under-review, interview-scheduled, hired, rejected]
+ *         description: Filter by application status
+ *     responses:
+ *       200:
+ *         description: Applications retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PaginatedResponse'
+ *       401:
+ *         description: Unauthorized
+ */
+
 // @route   GET /api/applications
 // @desc    Get applications (for current user based on role)
 // @access  Private

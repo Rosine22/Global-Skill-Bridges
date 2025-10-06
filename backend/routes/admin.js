@@ -13,9 +13,81 @@ const router = express.Router();
 router.use(protect);
 router.use(authorize("admin"));
 
-// @route   GET /api/admin/dashboard
-// @desc    Get admin dashboard statistics
-// @access  Private (Admin only)
+/**
+ * @swagger
+ * /api/admin/dashboard:
+ *   get:
+ *     summary: Get admin dashboard statistics
+ *     description: Retrieve comprehensive statistics for admin dashboard
+ *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Admin dashboard statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     users:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: integer
+ *                           example: 1250
+ *                         newThisMonth:
+ *                           type: integer
+ *                           example: 45
+ *                         jobSeekers:
+ *                           type: integer
+ *                           example: 800
+ *                         employers:
+ *                           type: integer
+ *                           example: 200
+ *                         mentors:
+ *                           type: integer
+ *                           example: 150
+ *                         rtbUsers:
+ *                           type: integer
+ *                           example: 100
+ *                     jobs:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: integer
+ *                           example: 500
+ *                         active:
+ *                           type: integer
+ *                           example: 320
+ *                         newThisMonth:
+ *                           type: integer
+ *                           example: 25
+ *                     applications:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: integer
+ *                           example: 2500
+ *                         pending:
+ *                           type: integer
+ *                           example: 150
+ *                         thisMonth:
+ *                           type: integer
+ *                           example: 180
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ *       500:
+ *         description: Server error
+ */
 router.get("/dashboard", async (req, res, next) => {
   try {
     // Get current date and date 30 days ago

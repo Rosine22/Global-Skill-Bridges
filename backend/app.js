@@ -5,6 +5,8 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
 require('dotenv').config();
 
 // Import routes
@@ -77,8 +79,9 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https:"],
     },
   },
 }));
@@ -218,26 +221,25 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/rtb', rtbRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
-// API Documentation route (placeholder)
-app.get('/api/docs', (req, res) => {
-  res.json({
-    message: 'API Documentation',
-    baseURL: `${req.protocol}://${req.get('host')}`,
-    routes: {
-      authentication: '/api/auth/*',
-      users: '/api/users/*',
-      jobs: '/api/jobs/*',
-      applications: '/api/applications/*',
-      mentorship: '/api/mentorship/*',
-      skills: '/api/skills/*',
-      messages: '/api/messages/*',
-      notifications: '/api/notifications/*',
-      admin: '/api/admin/*',
-      rtb: '/api/rtb/*',
-      analytics: '/api/analytics/*'
-    },
-    github: 'https://github.com/yourusername/global-skills-bridge'
-  });
+// Swagger API Documentation
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Global Skills Bridge API Documentation',
+  customfavIcon: '/favicon.ico',
+  swaggerOptions: {
+    persistAuthorization: true,
+    displayRequestDuration: true,
+    docExpansion: 'none',
+    filter: true,
+    showRequestHeaders: true,
+    tryItOutEnabled: true
+  }
+}));
+
+// Swagger JSON endpoint
+app.get('/api/docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
 });
 
 // Error Handling Middleware (must be after routes)

@@ -7,9 +7,66 @@ const { protect, authorize } = require("../middleware/auth");
 
 const router = express.Router();
 
-// @route   GET /api/mentorship
-// @desc    Get mentorship requests (filtered by user role)
-// @access  Private
+/**
+ * @swagger
+ * /api/mentorship:
+ *   get:
+ *     summary: Get mentorship requests
+ *     description: Retrieve mentorship requests filtered by user role (mentors see requests to them, mentees see their requests)
+ *     tags: [Mentorship]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of items per page
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, accepted, declined]
+ *         description: Filter by request status
+ *     responses:
+ *       200:
+ *         description: Mentorship requests retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/MentorshipRequest'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     current:
+ *                       type: integer
+ *                       example: 1
+ *                     total:
+ *                       type: integer
+ *                       example: 5
+ *                     pages:
+ *                       type: integer
+ *                       example: 1
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
 router.get("/", protect, async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;

@@ -152,10 +152,6 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
               {user?.role?.replace('-', ' ')} Dashboard
             </h1>
             <div className="flex items-center space-x-4">
-              <button className="relative p-2 text-gray-400 hover:text-gray-600">
-                <Bell className="h-6 w-6" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
               <Link
                 to="/notifications"
                 className="relative p-2 text-gray-400 hover:text-gray-600"
