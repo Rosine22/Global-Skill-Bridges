@@ -7,7 +7,6 @@ import {
   Calendar, 
   DollarSign, 
   Briefcase,
-  Globe,
   Users,
   ArrowLeft,
   CheckCircle,
