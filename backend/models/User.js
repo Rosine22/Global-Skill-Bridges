@@ -204,6 +204,31 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isApproved: {
+      type: Boolean,
+      default: function() {
+        // Auto-approve all roles except employer
+        return this.role !== 'employer';
+      },
+    },
+    approvalDate: Date,
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    adminNotes: [
+      {
+        note: String,
+        addedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        addedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
     lastLogin: Date,
     profileCompletion: {
       type: Number,

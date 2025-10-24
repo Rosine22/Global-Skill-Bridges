@@ -1,11 +1,14 @@
 const express = require("express");
 const { body, validationResult } = require("express-validator");
 const Application = require("../models/Application");
-const Job = require("../models/Job");
+const Job = require("../models/Job").default;
+const User = require("../models/User");
 const { Notification } = require("../models/Message");
 const { protect, authorize } = require("../middleware/auth");
+const EmailService = require("../services/emailService");
 
 const router = express.Router();
+const emailService = new EmailService();
 
 /**
  * @swagger
@@ -268,6 +271,7 @@ router.put(
         };
 
         if (statusMessages[status]) {
+          // Send in-app notification
           await Notification.createNotification({
             user: application.applicant._id,
             title: "Application Status Update",
@@ -282,6 +286,18 @@ router.put(
               ? "high"
               : "medium",
           });
+
+          // Send email notification
+          try {
+            const applicantUser = await User.findById(application.applicant._id);
+            if (applicantUser && applicantUser.email) {
+              await emailService.sendApplicationStatusUpdate(application, applicantUser, status);
+              console.log(`Email sent to ${applicantUser.email} for status: ${status}`);
+            }
+          } catch (emailError) {
+            console.error('Failed to send status update email:', emailError);
+            // Don't fail the request if email fails
+          }
         }
 
         res.status(200).json({
@@ -396,6 +412,18 @@ router.post(
         actionUrl: `/applications/${application._id}`,
         priority: "high",
       });
+
+      // Send interview email
+      try {
+        const applicantUser = await User.findById(application.applicant._id);
+        if (applicantUser && applicantUser.email) {
+          await emailService.sendInterviewScheduledEmail(application, applicantUser, interviewData);
+          console.log(`Interview email sent to ${applicantUser.email}`);
+        }
+      } catch (emailError) {
+        console.error('Failed to send interview email:', emailError);
+        // Don't fail the request if email fails
+      }
 
       res.status(200).json({
         success: true,
@@ -560,6 +588,110 @@ router.post(
   }
 );
 
+// @route   POST /api/applications/:id/offer
+// @desc    Send job offer to applicant
+// @access  Private (Employer or Admin)
+router.post(
+  "/:id/offer",
+  protect,
+  authorize("employer", "admin"),
+  [
+    body("salary")
+      .optional()
+      .isNumeric()
+      .withMessage("Salary must be a number"),
+    body("startDate")
+      .optional()
+      .isISO8601()
+      .withMessage("Valid start date is required"),
+    body("benefits")
+      .optional()
+      .isArray()
+      .withMessage("Benefits must be an array"),
+  ],
+  async (req, res, next) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: "Validation errors",
+          errors: errors.array(),
+        });
+      }
+
+      const application = await Application.findById(req.params.id)
+        .populate("job")
+        .populate("applicant")
+        .populate("employer");
+
+      if (!application) {
+        return res.status(404).json({
+          success: false,
+          message: "Application not found",
+        });
+      }
+
+      // Check authorization
+      const isJobOwner =
+        application.employer._id.toString() === req.user._id.toString();
+      const isAdmin = req.user.role === "admin";
+
+      if (!isJobOwner && !isAdmin) {
+        return res.status(403).json({
+          success: false,
+          message: "Not authorized to send offer for this application",
+        });
+      }
+
+      const offerDetails = {
+        salary: req.body.salary,
+        currency: req.body.currency || "USD",
+        startDate: req.body.startDate,
+        benefits: req.body.benefits || [],
+        isCounterOffer: req.body.isCounterOffer || false,
+      };
+
+      // Update application salary negotiation
+      application.salaryNegotiation.employerOffer = offerDetails;
+      application.status = "offer-made";
+
+      await application.save();
+
+      // Send offer email
+      try {
+        const applicantUser = await User.findById(application.applicant._id);
+        if (applicantUser && applicantUser.email) {
+          await emailService.sendJobOfferEmail(application, applicantUser, offerDetails);
+          console.log(`Job offer email sent to ${applicantUser.email}`);
+        }
+      } catch (emailError) {
+        console.error('Failed to send job offer email:', emailError);
+      }
+
+      // Send in-app notification
+      await Notification.createNotification({
+        user: application.applicant._id,
+        title: "Job Offer Received",
+        message: `You have received a job offer for the position "${application.job.title}" at ${application.job.company}`,
+        type: "job-offer",
+        relatedApplication: application._id,
+        relatedJob: application.job._id,
+        actionUrl: `/applications/${application._id}`,
+        priority: "high",
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "Job offer sent successfully",
+        data: application,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 // @route   PUT /api/applications/:id/withdraw
 // @desc    Withdraw application (by applicant)
 // @access  Private (Job seeker only)
@@ -619,6 +751,112 @@ router.put(
     }
   }
 );
+
+// @route   GET /api/applications/:id/cv/preview
+// @desc    Preview applicant's CV/resume
+// @access  Private (Employer or Admin)
+router.get("/:id/cv/preview", protect, async (req, res, next) => {
+  try {
+    const application = await Application.findById(req.params.id)
+      .populate("applicant", "name email")
+      .populate("employer");
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: "Application not found",
+      });
+    }
+
+    // Check authorization
+    const isEmployer =
+      application.employer._id.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === "admin";
+    const isApplicant =
+      application.applicant._id.toString() === req.user._id.toString();
+
+    if (!isEmployer && !isAdmin && !isApplicant) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to view this CV",
+      });
+    }
+
+    if (!application.resume || !application.resume.url) {
+      return res.status(404).json({
+        success: false,
+        message: "CV/Resume not found for this application",
+      });
+    }
+
+    // Return CV information for preview
+    res.status(200).json({
+      success: true,
+      data: {
+        applicantName: application.applicant.name,
+        fileName: application.resume.fileName || "resume.pdf",
+        url: application.resume.url,
+        previewUrl: application.resume.url,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @route   GET /api/applications/:id/cv/download
+// @desc    Download applicant's CV/resume
+// @access  Private (Employer or Admin)
+router.get("/:id/cv/download", protect, async (req, res, next) => {
+  try {
+    const application = await Application.findById(req.params.id)
+      .populate("applicant", "name email")
+      .populate("employer");
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: "Application not found",
+      });
+    }
+
+    // Check authorization
+    const isEmployer =
+      application.employer._id.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === "admin";
+    const isApplicant =
+      application.applicant._id.toString() === req.user._id.toString();
+
+    if (!isEmployer && !isAdmin && !isApplicant) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to download this CV",
+      });
+    }
+
+    if (!application.resume || !application.resume.url) {
+      return res.status(404).json({
+        success: false,
+        message: "CV/Resume not found for this application",
+      });
+    }
+
+    // If using external storage (like Cloudinary), redirect to URL
+    // Otherwise, if stored locally, stream the file
+    const fileName = application.resume.fileName || `${application.applicant.name.replace(/\s+/g, '_')}_Resume.pdf`;
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        downloadUrl: application.resume.url,
+        fileName: fileName,
+        applicantName: application.applicant.name,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 // @route   GET /api/applications/stats
 // @desc    Get application statistics for current user

@@ -560,7 +560,7 @@ router.post('/share-job', [
     }
 
     // Verify job exists
-    const Job = require('../models/Job');
+    const Job = require('../models/Job').default;
     const job = await Job.findById(jobId);
     if (!job) {
       return res.status(404).json({

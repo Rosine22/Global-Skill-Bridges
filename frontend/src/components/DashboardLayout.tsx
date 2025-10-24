@@ -31,16 +31,21 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   const getNavItems = () => {
+    // Base items without Messages - Messages will be added conditionally
     const baseItems = [
       { name: 'Dashboard', href: '/dashboard', icon: Home },
-      { name: 'Profile', href: '/profile', icon: User },
-      { name: 'Messages', href: '/messages', icon: MessageSquare }
+      { name: 'Profile', href: '/profile', icon: User }
     ];
+
+    // Add Messages only for job-seekers and mentors
+    const baseWithMessages = user?.role === 'job-seeker' || user?.role === 'mentor' 
+      ? [...baseItems, { name: 'Messages', href: '/messages', icon: MessageSquare }]
+      : baseItems;
 
     switch (user?.role) {
       case 'job-seeker':
         return [
-          ...baseItems,
+          ...baseWithMessages,
           { name: 'Find Jobs', href: '/dashboard', icon: Briefcase },
           { name: 'My Applications', href: '/applications', icon: Briefcase },
           { name: 'Mentorship', href: '/mentorship', icon: Users },
@@ -55,7 +60,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
         ];
       case 'mentor':
         return [
-          ...baseItems,
+          ...baseWithMessages,
           { name: 'Mentees', href: '/dashboard', icon: Users },
           { name: 'Sessions', href: '/sessions', icon: MessageSquare }
         ];
@@ -84,7 +89,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
   const navItems = getNavItems();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-fit bg-gray-50 flex">
       {/* Sidebar */}
       <div className="w-64 bg-white shadow-sm border-r flex flex-col">
         {/* Logo */}
@@ -148,8 +153,8 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Header */}
         <header className="bg-white shadow-sm border-b">
           <div className="px-6 py-4 flex justify-between items-center">
-            <h1 className="text-2xl font-semibold text-gray-900 capitalize">
-              {user?.role?.replace('-', ' ')} Dashboard
+            <h1 className="text-2xl font-semibold text-gray-900">
+              Dashboard
             </h1>
             <div className="flex items-center space-x-4">
               <Link

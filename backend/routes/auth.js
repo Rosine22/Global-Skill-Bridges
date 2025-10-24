@@ -5,8 +5,12 @@ const crypto = require("crypto");
 const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
 const { protect, rateLimitByUser } = require("../middleware/auth");
+const EmailService = require("../services/emailService");
 
 const router = express.Router();
+
+// Initialize email service
+const emailService = new EmailService();
 
 /**
  * @swagger
@@ -146,7 +150,7 @@ router.post("/register", registerValidation, async (req, res, next) => {
       });
     }
 
-    const { name, email, password, role, phone, companyInfo } = req.body;
+    const { name, email, password, role, phone, companyInfo, avatar } = req.body;
 
     // Check if user exists
     let user = await User.findOne({ email });
@@ -171,6 +175,14 @@ router.post("/register", registerValidation, async (req, res, next) => {
       userData.companyInfo = companyInfo;
     }
 
+    // Add avatar/logo if provided (base64 or URL)
+    if (avatar) {
+      userData.avatar = {
+        url: avatar,
+        public_id: `avatar_${Date.now()}` // Generate a simple ID
+      };
+    }
+
     // Create user
     user = await User.create(userData);
 
@@ -178,8 +190,28 @@ router.post("/register", registerValidation, async (req, res, next) => {
     user.calculateProfileCompletion();
     await user.save();
 
-    // Send verification email (implement email service)
-    // await sendVerificationEmail(user);
+    // Send verification email
+    try {
+      // Generate email verification token (you may need to add this method to User model)
+      const verificationToken = crypto.randomBytes(20).toString('hex');
+      user.emailVerificationToken = verificationToken;
+      await user.save({ validateBeforeSave: false });
+
+      const emailResult = await emailService.sendEmailVerificationEmail(
+        user.email,
+        verificationToken,
+        user
+      );
+
+      if (emailResult.success) {
+        console.log(`Verification email sent to ${user.email}: ${emailResult.messageId}`);
+      } else {
+        console.error(`Failed to send verification email to ${user.email}:`, emailResult.error);
+      }
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError);
+      // Don't fail registration if email fails
+    }
 
     sendTokenResponse(user, 201, res, "User registered successfully");
   } catch (error) {
@@ -499,17 +531,27 @@ router.post(
       const resetToken = user.getResetPasswordToken();
       await user.save({ validateBeforeSave: false });
 
-      // Create reset url
-      const resetUrl = `${req.protocol}://${req.get(
-        "host"
-      )}/reset-password/${resetToken}`;
+      try {
+        // Send password reset email
+        const emailResult = await emailService.sendPasswordResetEmail(
+          user.email,
+          resetToken,
+          user
+        );
 
-      // Send email (implement email service)
-      // await sendPasswordResetEmail(user.email, resetUrl);
+        if (emailResult.success) {
+          console.log(`Password reset email sent to ${user.email}: ${emailResult.messageId}`);
+        } else {
+          console.error(`Failed to send password reset email to ${user.email}:`, emailResult.error);
+        }
+      } catch (emailError) {
+        console.error('Error sending password reset email:', emailError);
+        // Don't fail the request if email fails - still return success for security
+      }
 
       res.status(200).json({
         success: true,
-        message: "Password reset email sent",
+        message: "If an account with that email exists, a password reset link has been sent",
         resetToken:
           process.env.NODE_ENV === "development" ? resetToken : undefined,
       });

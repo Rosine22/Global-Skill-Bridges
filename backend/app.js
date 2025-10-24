@@ -35,8 +35,8 @@ app.set('trust proxy', 1);
 const connectDB = async () => {
   try {
     // MongoDB Atlas connection string
-    const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://rosine:<db_password>@cluster0.o0f0hb5.mongodb.net/global-skills-bridge?retryWrites=true&w=majority';
-    
+    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/Global-skills';
+    //mongodb+srv://rosine:<db_password>@cluster0.o0f0hb5.mongodb.net/global-skills-bridge?retryWrites=true&w=majority
     console.log('🔄 Connecting to MongoDB Atlas...');
     
     const conn = await mongoose.connect(mongoURI, {

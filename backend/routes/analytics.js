@@ -1,6 +1,6 @@
 const express = require('express');
 const User = require('../models/User');
-const Job = require('../models/Job');
+const Job = require('../models/Job').default;
 const Application = require('../models/Application');
 const { RTBGraduate } = require('../models/Skill');
 const { protect, authorize } = require('../middleware/auth');

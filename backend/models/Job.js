@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
+import { Schema, model } from "mongoose";
 
-const jobSchema = new mongoose.Schema(
+const jobSchema = new Schema(
   {
     // Basic Job Information
     title: {
@@ -17,7 +17,7 @@ const jobSchema = new mongoose.Schema(
 
     // Company Information
     employer: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
@@ -227,7 +227,7 @@ const jobSchema = new mongoose.Schema(
       default: false,
     },
     verifiedBy: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "User",
     },
     verificationDate: Date,
@@ -235,7 +235,7 @@ const jobSchema = new mongoose.Schema(
     // Archive Information
     archivedAt: Date,
     archivedBy: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "User",
     },
   },
@@ -345,4 +345,4 @@ jobSchema.statics.findFeatured = function (limit = 10) {
     .limit(limit);
 };
 
-module.exports = mongoose.model("Job", jobSchema);
+export default model("Job", jobSchema);

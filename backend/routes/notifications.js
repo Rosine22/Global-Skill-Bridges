@@ -1,6 +1,6 @@
 const express = require('express');
 const User = require('../models/User');
-const Job = require('../models/Job');
+const Job = require('../models/Job').default;
 const Application = require('../models/Application');
 const Message = require('../models/Message');
 const { protect } = require('../middleware/auth');

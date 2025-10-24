@@ -162,7 +162,7 @@ FROM_EMAIL=noreply@globalskillsbridge.com
 FROM_NAME=Global Skills Bridge
 
 # Admin Configuration
-ADMIN_EMAIL=admin@globalskillsbridge.com
+ADMIN_EMAIL=globalskills4@gmail.com
 RTB_ADMIN_EMAIL=rtb@rtb.gov.rw
 ```
 

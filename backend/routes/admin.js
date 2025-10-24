@@ -1,13 +1,15 @@
 const express = require("express");
 const User = require("../models/User");
-const Job = require("../models/Job");
+const Job = require("../models/Job").default;
 const Application = require("../models/Application");
 const MentorshipRequest = require("../models/MentorshipRequest");
 const SkillVerification = require("../models/Skill");
 const { RTBGraduate } = require("../models/Skill");
 const { protect, authorize } = require("../middleware/auth");
+const EmailService = require("../services/emailService");
 
 const router = express.Router();
+const emailService = new EmailService();
 
 // All admin routes require admin authentication
 router.use(protect);
@@ -754,6 +756,133 @@ router.post("/announcements", async (req, res, next) => {
       success: true,
       message: `Announcement sent to ${targetUsers.length} users`,
       targetCount: targetUsers.length,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @route   GET /api/admin/employers/pending
+// @desc    Get all employers awaiting approval
+// @access  Private (Admin only)
+router.get("/employers/pending", async (req, res, next) => {
+  try {
+    const pendingEmployers = await User.find({
+      role: "employer",
+      isApproved: false,
+      isActive: true,
+    })
+      .select("-password")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: pendingEmployers.length,
+      data: pendingEmployers,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @route   PUT /api/admin/employers/:id/approve
+// @desc    Approve or reject an employer account
+// @access  Private (Admin only)
+router.put("/employers/:id/approve", async (req, res, next) => {
+  try {
+    const { approve, notes } = req.body;
+
+    const employer = await User.findById(req.params.id);
+
+    if (!employer) {
+      return res.status(404).json({
+        success: false,
+        message: "Employer not found",
+      });
+    }
+
+    if (employer.role !== "employer") {
+      return res.status(400).json({
+        success: false,
+        message: "User is not an employer",
+      });
+    }
+
+    // Update employer approval status
+    employer.isApproved = approve;
+    employer.approvalDate = approve ? new Date() : null;
+    employer.approvedBy = approve ? req.user._id : null;
+    
+    if (notes) {
+      if (!employer.adminNotes) {
+        employer.adminNotes = [];
+      }
+      employer.adminNotes.push({
+        note: notes,
+        addedBy: req.user._id,
+        addedAt: new Date(),
+      });
+    }
+
+    await employer.save();
+
+    // Send email notification
+    try {
+      await emailService.sendEmployerApprovalEmail(employer, approve, notes);
+      console.log(`Approval email sent to ${employer.email}`);
+    } catch (emailError) {
+      console.error('Error sending approval email:', emailError);
+      // Don't fail the request if email fails
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Employer ${approve ? 'approved' : 'rejected'} successfully. Email notification sent.`,
+      data: employer,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @route   GET /api/admin/employers
+// @desc    Get all employers with filtering
+// @access  Private (Admin only)
+router.get("/employers", async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const filter = { role: "employer" };
+
+    if (req.query.isApproved !== undefined) {
+      filter.isApproved = req.query.isApproved === "true";
+    }
+
+    if (req.query.search) {
+      filter.$or = [
+        { name: new RegExp(req.query.search, "i") },
+        { email: new RegExp(req.query.search, "i") },
+        { "companyInfo.name": new RegExp(req.query.search, "i") },
+      ];
+    }
+
+    const employers = await User.find(filter)
+      .select("-password")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await User.countDocuments(filter);
+
+    res.status(200).json({
+      success: true,
+      count: employers.length,
+      total,
+      pages: Math.ceil(total / limit),
+      currentPage: page,
+      data: employers,
     });
   } catch (error) {
     next(error);
