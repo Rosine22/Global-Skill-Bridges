@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4-Color Button System - Global Skills Bridge</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 p-8">
+  <div class="max-w-7xl mx-auto">
+    <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+      <h1 class="text-4xl font-bold text-gray-900 mb-2">Unified Button Design System</h1>
+      <p class="text-xl text-gray-600 mb-6">4-Color Palette for Consistent UI Across All Pages</p>
+      
+      <div class="grid md:grid-cols-4 gap-4 mb-8">
+        <div class="text-center p-4 bg-teal-50 rounded-lg border-2 border-teal-200">
+          <div class="w-16 h-16 bg-teal-600 rounded-full mx-auto mb-3"></div>
+          <h3 class="font-bold text-teal-900 mb-1">Primary</h3>
+          <p class="text-sm text-teal-700">Teal - Main Actions</p>
+        </div>
+        <div class="text-center p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+          <div class="w-16 h-16 bg-blue-600 rounded-full mx-auto mb-3"></div>
+          <h3 class="font-bold text-blue-900 mb-1">Secondary</h3>
+          <p class="text-sm text-blue-700">Blue - Alternative</p>
+        </div>
+        <div class="text-center p-4 bg-green-50 rounded-lg border-2 border-green-200">
+          <div class="w-16 h-16 bg-green-600 rounded-full mx-auto mb-3"></div>
+          <h3 class="font-bold text-green-900 mb-1">Success</h3>
+          <p class="text-sm text-green-700">Green - Approval</p>
+        </div>
+        <div class="text-center p-4 bg-red-50 rounded-lg border-2 border-red-200">
+          <div class="w-16 h-16 bg-red-600 rounded-full mx-auto mb-3"></div>
+          <h3 class="font-bold text-red-900 mb-1">Danger</h3>
+          <p class="text-sm text-red-700">Red - Destructive</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Solid Buttons -->
+    <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Solid Buttons</h2>
+      
+      <div class="space-y-6">
+        <!-- Large -->
+        <div>
+          <h3 class="text-lg font-semibold text-gray-700 mb-3">Large Size</h3>
+          <div class="flex flex-wrap gap-4">
+            <button class="bg-teal-600 hover:bg-teal-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors shadow-md">
+              Primary Large
+            </button>
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors shadow-md">
+              Secondary Large
+            </button>
+            <button class="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors shadow-md">
+              Success Large
+            </button>
+            <button class="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors shadow-md">
+              Danger Large
+            </button>
+          </div>
+        </div>
+
+        <!-- Medium (Default) -->
+        <div>
+          <h3 class="text-lg font-semibold text-gray-700 mb-3">Medium Size (Default)</h3>
+          <div class="flex flex-wrap gap-4">
+            <button class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
+              Primary Medium
+            </button>
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
+              Secondary Medium
+            </button>
+            <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
+              Success Medium
+            </button>
+            <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
+              Danger Medium
+            </button>
+          </div>
+        </div>
+
+        <!-- Small -->
+        <div>
+          <h3 class="text-lg font-semibold text-gray-700 mb-3">Small Size</h3>
+          <div class="flex flex-wrap gap-4">
+            <button class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors shadow-sm">
+              Primary Small
+            </button>
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors shadow-sm">
+              Secondary Small
+            </button>
+            <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors shadow-sm">
+              Success Small
+            </button>
+            <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors shadow-sm">
+              Danger Small
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Outline Buttons -->
+    <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Outline Buttons</h2>
+      <div class="flex flex-wrap gap-4">
+        <button class="border-2 border-teal-600 text-teal-700 hover:bg-teal-50 px-4 py-2 rounded-lg font-medium transition-colors">
+          Outline Primary
+        </button>
+        <button class="border-2 border-blue-600 text-blue-700 hover:bg-blue-50 px-4 py-2 rounded-lg font-medium transition-colors">
+          Outline Secondary
+        </button>
+        <button class="border-2 border-green-600 text-green-700 hover:bg-green-50 px-4 py-2 rounded-lg font-medium transition-colors">
+          Outline Success
+        </button>
+        <button class="border-2 border-red-600 text-red-700 hover:bg-red-50 px-4 py-2 rounded-lg font-medium transition-colors">
+          Outline Danger
+        </button>
+      </div>
+    </div>
+
+    <!-- Ghost Buttons -->
+    <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Ghost Buttons (Minimal)</h2>
+      <div class="flex flex-wrap gap-4">
+        <button class="text-teal-600 hover:bg-teal-50 px-4 py-2 rounded-lg font-medium transition-colors">
+          Ghost Primary
+        </button>
+        <button class="text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-medium transition-colors">
+          Ghost Secondary
+        </button>
+        <button class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg font-medium transition-colors">
+          Ghost Gray
+        </button>
+      </div>
+    </div>
+
+    <!-- Usage Examples -->
+    <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Real-World Usage Examples</h2>
+      
+      <div class="space-y-8">
+        <!-- Form Example -->
+        <div class="border border-gray-200 rounded-lg p-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Job Application Form</h3>
+          <div class="space-y-4 mb-6">
+            <input type="text" placeholder="Your Name" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+            <textarea placeholder="Cover Letter" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+          </div>
+          <div class="flex gap-3">
+            <button class="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-sm">
+              Submit Application
+            </button>
+            <button class="text-gray-600 hover:bg-gray-100 px-6 py-2 rounded-lg font-medium transition-colors">
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        <!-- Admin Actions Example -->
+        <div class="border border-gray-200 rounded-lg p-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Employer Approval Panel</h3>
+          <div class="bg-gray-50 p-4 rounded-lg mb-4">
+            <p class="font-medium text-gray-900 mb-1">TechCorp Ltd.</p>
+            <p class="text-sm text-gray-600">Requested verification for posting jobs</p>
+          </div>
+          <div class="flex gap-3">
+            <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
+              ✓ Approve
+            </button>
+            <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
+              ✗ Reject
+            </button>
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
+              View Details
+            </button>
+          </div>
+        </div>
+
+        <!-- Dashboard Actions -->
+        <div class="border border-gray-200 rounded-lg p-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Dashboard Actions</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <button class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-3 rounded-lg font-medium transition-colors shadow-sm">
+              + Post Job
+            </button>
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors shadow-sm">
+              View Applications
+            </button>
+            <button class="border-2 border-teal-600 text-teal-700 hover:bg-teal-50 px-4 py-3 rounded-lg font-medium transition-colors">
+              Edit Profile
+            </button>
+            <button class="text-gray-600 hover:bg-gray-100 px-4 py-3 rounded-lg font-medium transition-colors">
+              Settings
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decision Guide -->
+    <div class="bg-gradient-to-r from-teal-600 to-blue-600 rounded-lg shadow-lg p-8 text-white">
+      <h2 class="text-2xl font-bold mb-6">Quick Decision Guide</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-white/10 backdrop-blur rounded-lg p-4">
+          <h3 class="font-bold mb-2 text-teal-100">🎯 Use PRIMARY (Teal) for:</h3>
+          <ul class="space-y-1 text-sm">
+            <li>✓ Submit forms</li>
+            <li>✓ Save changes</li>
+            <li>✓ Create new items</li>
+            <li>✓ Post jobs</li>
+            <li>✓ Send messages</li>
+            <li>✓ Get Started buttons</li>
+          </ul>
+        </div>
+        <div class="bg-white/10 backdrop-blur rounded-lg p-4">
+          <h3 class="font-bold mb-2 text-blue-100">ℹ️ Use SECONDARY (Blue) for:</h3>
+          <ul class="space-y-1 text-sm">
+            <li>✓ View Details</li>
+            <li>✓ Learn More</li>
+            <li>✓ Back/Cancel (non-destructive)</li>
+            <li>✓ Info buttons</li>
+            <li>✓ Filter/Search</li>
+          </ul>
+        </div>
+        <div class="bg-white/10 backdrop-blur rounded-lg p-4">
+          <h3 class="font-bold mb-2 text-green-100">✅ Use SUCCESS (Green) for:</h3>
+          <ul class="space-y-1 text-sm">
+            <li>✓ Approve applications</li>
+            <li>✓ Accept requests</li>
+            <li>✓ Confirm actions</li>
+            <li>✓ Complete tasks</li>
+            <li>✓ Verify information</li>
+          </ul>
+        </div>
+        <div class="bg-white/10 backdrop-blur rounded-lg p-4">
+          <h3 class="font-bold mb-2 text-red-100">⚠️ Use DANGER (Red) for:</h3>
+          <ul class="space-y-1 text-sm">
+            <li>✓ Delete items</li>
+            <li>✓ Reject applications</li>
+            <li>✓ Remove users</li>
+            <li>✓ Cancel (destructive)</li>
+            <li>✓ Decline requests</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center mt-8 text-gray-600">
+      <p class="text-sm">Global Skills Bridge - Unified Design System</p>
+      <p class="text-xs mt-2">Consistent UI • Better UX • Easier Maintenance</p>
+    </div>
+  </div>
+</body>
+</html>

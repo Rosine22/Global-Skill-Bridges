@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUserContext, type EmployerProfile } from '../../contexts/UserContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { getApiUrl, getAuthHeaders, API_ENDPOINTS } from '../../config/api';
 import { 
   Users, 
   CheckCircle, 
@@ -16,14 +16,44 @@ import {
   AlertCircle
 } from 'lucide-react';
 
+type BackendEmployer = {
+  _id: string;
+  name: string; // contact person
+  email: string;
+  phone?: string;
+  role: string;
+  isApproved: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  companyInfo?: {
+    name?: string;
+    industry?: string;
+    size?: string;
+    website?: string;
+    description?: string;
+    registrationNumber?: string;
+    establishedYear?: number;
+  };
+  location?: {
+    city?: string;
+    country?: string;
+    address?: string;
+  };
+  adminNotes?: Array<{ note: string; addedAt: string; addedBy: string }>;
+};
+
 function AdminEmployerApproval() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { employerProfiles, updateEmployerApprovalStatus } = useUserContext();
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'pending' | 'approved' | 'rejected'>('pending');
-  const [selectedEmployer, setSelectedEmployer] = useState<EmployerProfile | null>(null);
+  const [activeTab, setActiveTab] = useState<'pending' | 'approved'>('pending');
+  const [pendingEmployers, setPendingEmployers] = useState<BackendEmployer[]>([]);
+  const [approvedEmployers, setApprovedEmployers] = useState<BackendEmployer[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedEmployer, setSelectedEmployer] = useState<BackendEmployer | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
 
   // Check if user is admin
@@ -40,6 +70,40 @@ function AdminEmployerApproval() {
       return;
     }
   }, [user, navigate]);
+
+  // Fetch employers from backend
+  const fetchEmployers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const headers = getAuthHeaders();
+
+      // Pending
+      const pendingRes = await fetch(getApiUrl(`${API_ENDPOINTS.ADMIN}/employers/pending`), { headers });
+      if (!pendingRes.ok) throw new Error('Failed to load pending employers');
+      const pendingJson = await pendingRes.json();
+      setPendingEmployers(pendingJson.data || []);
+
+      // Approved
+      const approvedRes = await fetch(getApiUrl(`${API_ENDPOINTS.ADMIN}/employers?isApproved=true`), { headers });
+      if (!approvedRes.ok) throw new Error('Failed to load approved employers');
+      const approvedJson = await approvedRes.json();
+      setApprovedEmployers(approvedJson.data || []);
+    } catch (e: unknown) {
+      console.error('Error fetching employers', e);
+      const msg = e instanceof Error ? e.message : 'Failed to load employers';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user && (user.role === 'admin' || user.role === 'rtb-admin')) {
+      fetchEmployers();
+    }
+  }, [user]);
 
   // Show loading while checking authentication
   if (!user) {
@@ -75,36 +139,64 @@ function AdminEmployerApproval() {
   }
 
   // Filter employers based on search term and status
-  const filteredEmployers = employerProfiles.filter((employer) => {
-    const matchesSearch = employer.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         employer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         employer.industry.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTab = activeTab === 'pending' 
-      ? employer.status === 'pending' 
-      : activeTab === 'approved' 
-      ? employer.status === 'approved'
-      : employer.status === 'rejected';
-    return matchesSearch && matchesTab;
+  const listForTab = activeTab === 'pending' ? pendingEmployers : approvedEmployers;
+  const term = searchTerm.toLowerCase();
+  const currentEmployers = listForTab.filter((e) => {
+    const company = e.companyInfo?.name?.toLowerCase() || '';
+    const email = e.email?.toLowerCase() || '';
+    const industry = e.companyInfo?.industry?.toLowerCase() || '';
+    return company.includes(term) || email.includes(term) || industry.includes(term);
   });
 
-  const pendingCount = employerProfiles.filter(e => e.status === 'pending').length;
-  const approvedCount = employerProfiles.filter(e => e.status === 'approved').length;
-  const rejectedCount = employerProfiles.filter(e => e.status === 'rejected').length;
+  const pendingCount = pendingEmployers.length;
+  const approvedCount = approvedEmployers.length;
 
   const handleApprove = async (employerId: string) => {
-    updateEmployerApprovalStatus(employerId, 'approved');
-    alert('Employer approved successfully! They will receive an email notification.');
-    setShowModal(false);
+    try {
+      setLoading(true);
+      const headers = {
+        ...getAuthHeaders(),
+      };
+      const res = await fetch(getApiUrl(`${API_ENDPOINTS.ADMIN}/employers/${employerId}/approve`), {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ approve: true })
+      });
+      if (!res.ok) throw new Error('Failed to approve employer');
+      await fetchEmployers();
+      setShowModal(false);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to approve employer.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReject = async (employerId: string) => {
-    const reason = prompt('Please provide a reason for rejection (optional):');
-    updateEmployerApprovalStatus(employerId, 'rejected', reason || undefined);
-    alert(`Employer rejected. ${reason ? `Reason: ${reason}` : 'No reason provided.'}`);
-    setShowModal(false);
+    try {
+      const notes = prompt('Please provide a reason for rejection (optional):') || '';
+      setLoading(true);
+      const headers = {
+        ...getAuthHeaders(),
+      };
+      const res = await fetch(getApiUrl(`${API_ENDPOINTS.ADMIN}/employers/${employerId}/approve`), {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ approve: false, notes })
+      });
+      if (!res.ok) throw new Error('Failed to reject employer');
+      await fetchEmployers();
+      setShowModal(false);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to reject employer.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: 'pending' | 'approved') => {
     switch (status) {
       case 'pending':
         return (
@@ -118,13 +210,6 @@ function AdminEmployerApproval() {
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
             <CheckCircle className="h-3 w-3 mr-1" />
             Approved
-          </span>
-        );
-      case 'rejected':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-            <XCircle className="h-3 w-3 mr-1" />
-            Rejected
           </span>
         );
       default:
@@ -211,24 +296,7 @@ function AdminEmployerApproval() {
                   </span>
                 </div>
               </button>
-              <button
-                onClick={() => setActiveTab('rejected')}
-                className={`flex-1 py-4 px-6 text-center font-medium text-sm border-b-2 transition-colors ${
-                  activeTab === 'rejected'
-                    ? 'border-red-500 text-red-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <div className="flex items-center justify-center">
-                  <XCircle className="h-5 w-5 mr-2" />
-                  Rejected Employers
-                  <span className={`ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    activeTab === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {rejectedCount}
-                  </span>
-                </div>
-              </button>
+              {/* Rejected employers are not yet tracked separately in backend */}
             </nav>
           </div>
         </div>
@@ -247,25 +315,29 @@ function AdminEmployerApproval() {
           </div>
         </div>
 
+        {error && (
+          <div className="mb-4 p-3 rounded border border-red-200 bg-red-50 text-red-700 text-sm">{error}</div>
+        )}
         {/* Employer Cards Grid */}
-        {filteredEmployers.length === 0 ? (
+        {loading ? (
+          <div className="bg-white rounded-lg shadow-sm border p-12 text-center">
+            <p className="text-gray-600">Loading employers...</p>
+          </div>
+        ) : currentEmployers.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm border p-12 text-center">
             <Users className="mx-auto h-16 w-16 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No {activeTab === 'pending' ? 'pending' : activeTab === 'approved' ? 'approved' : 'rejected'} employers found
+              No {activeTab === 'pending' ? 'pending' : 'approved'} employers found
             </h3>
             <p className="text-gray-500">
-              {employerProfiles.length === 0 
-                ? "No employer applications have been submitted yet."
-                : `No ${activeTab === 'pending' ? 'pending applications' : activeTab === 'approved' ? 'approved employers' : 'rejected employers'} match your search criteria.`
-              }
+              {activeTab === 'pending' ? 'No employer applications are pending review.' : 'No approved employers found.'}
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEmployers.map((employer) => (
+            {currentEmployers.map((employer) => (
               <div 
-                key={employer.id} 
+                key={employer._id} 
                 className="bg-white rounded-lg shadow-sm border hover:shadow-lg transition-all duration-200 cursor-pointer group"
                 onClick={() => {
                   setSelectedEmployer(employer);
@@ -275,22 +347,14 @@ function AdminEmployerApproval() {
                 <div className="p-6">
                   {/* Logo and Company Name */}
                   <div className="flex items-start mb-4">
-                    {employer.companyLogo ? (
-                      <img 
-                        src={employer.companyLogo} 
-                        alt={`${employer.companyName} logo`}
-                        className="h-14 w-14 rounded-lg object-cover border-2 border-gray-200 flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="h-14 w-14 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold border-2 border-gray-200 flex-shrink-0">
-                        {employer.companyName.charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                    <div className="h-14 w-14 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold border-2 border-gray-200 flex-shrink-0">
+                      {(employer.companyInfo?.name || 'E')[0]?.toUpperCase()}
+                    </div>
                     <div className="ml-4 flex-1 min-w-0">
                       <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                        {employer.companyName}
+                        {employer.companyInfo?.name || 'Unknown Company'}
                       </h3>
-                      <p className="text-sm text-gray-500 truncate">{employer.industry}</p>
+                      <p className="text-sm text-gray-500 truncate">{employer.companyInfo?.industry || 'Industry not set'}</p>
                     </div>
                   </div>
 
@@ -298,7 +362,7 @@ function AdminEmployerApproval() {
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center text-sm text-gray-600">
                       <MapPin className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
-                      <span className="truncate">{employer.location}</span>
+                      <span className="truncate">{[employer.location?.city, employer.location?.country].filter(Boolean).join(', ') || 'Location not set'}</span>
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
                       <Mail className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
@@ -306,13 +370,13 @@ function AdminEmployerApproval() {
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
                       <Building2 className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
-                      <span className="truncate">{employer.companySize}</span>
+                      <span className="truncate">{employer.companyInfo?.size || 'Size not set'}</span>
                     </div>
                   </div>
 
                   {/* Status Badge */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    {getStatusBadge(employer.status)}
+                    {getStatusBadge(activeTab)}
                     <button className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center">
                       View Details
                       <Eye className="h-4 w-4 ml-1" />
@@ -332,22 +396,14 @@ function AdminEmployerApproval() {
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  {selectedEmployer.companyLogo ? (
-                    <img 
-                      src={selectedEmployer.companyLogo} 
-                      alt={`${selectedEmployer.companyName} logo`}
-                      className="h-16 w-16 rounded-lg object-cover border-2 border-gray-200 shadow-sm"
-                    />
-                  ) : (
-                    <div className="h-16 w-16 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold border-2 border-gray-200 shadow-sm">
-                      {selectedEmployer.companyName.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  <div className="h-16 w-16 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold border-2 border-gray-200 shadow-sm">
+                    {(selectedEmployer.companyInfo?.name || 'E')[0]?.toUpperCase()}
+                  </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">{selectedEmployer.companyName}</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">{selectedEmployer.companyInfo?.name || 'Unknown Company'}</h2>
                     <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
                       <Building2 className="h-4 w-4" />
-                      {selectedEmployer.industry}
+                      {selectedEmployer.companyInfo?.industry || 'Industry not set'}
                     </p>
                   </div>
                 </div>
@@ -367,67 +423,40 @@ function AdminEmployerApproval() {
                   <Building2 className="h-5 w-5 mr-2" />
                   Company Information
                 </h3>
-                
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Company Logo</label>
-                  {selectedEmployer.companyLogo ? (
-                    <div>
-                      <img 
-                        src={selectedEmployer.companyLogo} 
-                        alt={`${selectedEmployer.companyName} logo`}
-                        className="h-32 w-32 rounded-lg object-cover border-2 border-gray-300 shadow-md hover:shadow-lg transition-shadow"
-                        onError={(e) => {
-                          console.error('Image failed to load!', selectedEmployer.companyLogo);
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                      <p className="text-xs text-green-600 mt-2 font-medium">✓ Logo uploaded</p>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="h-32 w-32 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-5xl font-bold border-2 border-gray-300 shadow-md">
-                        {selectedEmployer.companyName.charAt(0).toUpperCase()}
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2 italic">No logo uploaded</p>
-                    </div>
-                  )}
-                </div>
-                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Company Name</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.companyName}</p>
+                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.companyInfo?.name || 'Unknown Company'}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Industry</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.industry}</p>
+                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.companyInfo?.industry || 'Not set'}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Company Size</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.companySize}</p>
+                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.companyInfo?.size || 'Not set'}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Founded</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.founded}</p>
+                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.companyInfo?.establishedYear || 'Not set'}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Website</label>
                     <p className="mt-1 text-sm text-gray-900">
-                      <a href={selectedEmployer.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                        {selectedEmployer.website}
+                      <a href={selectedEmployer.companyInfo?.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {selectedEmployer.companyInfo?.website || 'Not set'}
                       </a>
                     </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Registration Number</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.companyRegistration}</p>
+                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.companyInfo?.registrationNumber || 'Not set'}</p>
                   </div>
                 </div>
-                
-                {selectedEmployer.description && (
+                {selectedEmployer.companyInfo?.description && (
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700">Description</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.description}</p>
+                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.companyInfo.description}</p>
                   </div>
                 )}
               </div>
@@ -445,23 +474,16 @@ function AdminEmployerApproval() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Phone</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.phone}</p>
+                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.phone || 'Not set'}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Contact Person</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.contactPerson}</p>
+                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.name}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Location</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.location}</p>
+                    <p className="mt-1 text-sm text-gray-900">{[selectedEmployer.location?.address, selectedEmployer.location?.city, selectedEmployer.location?.country].filter(Boolean).join(', ') || 'Not set'}</p>
                   </div>
-                </div>
-                
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700">Address</label>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {selectedEmployer.address}, {selectedEmployer.city}, {selectedEmployer.country} {selectedEmployer.postalCode}
-                  </p>
                 </div>
               </div>
 
@@ -471,44 +493,13 @@ function AdminEmployerApproval() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Tax ID</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.taxId}</p>
+                    <p className="mt-1 text-sm text-gray-900">{/* Not tracked in backend user model by default */}Not set</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Remote Policy</label>
-                    <p className="mt-1 text-sm text-gray-900 capitalize">{selectedEmployer.remotePolicy}</p>
+                    <p className="mt-1 text-sm text-gray-900 capitalize">Not set</p>
                   </div>
                 </div>
-                
-                {selectedEmployer.linkedinProfile && (
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700">LinkedIn Profile</label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      <a href={selectedEmployer.linkedinProfile} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                        {selectedEmployer.linkedinProfile}
-                      </a>
-                    </p>
-                  </div>
-                )}
-                
-                {selectedEmployer.benefits && selectedEmployer.benefits.length > 0 && (
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700">Benefits</label>
-                    <div className="mt-1 flex flex-wrap gap-2">
-                      {selectedEmployer.benefits.map((benefit, index) => (
-                        <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                          {benefit}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {selectedEmployer.workCulture && (
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700">Work Culture</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.workCulture}</p>
-                  </div>
-                )}
               </div>
 
               {/* Application Status and Actions */}
@@ -517,7 +508,7 @@ function AdminEmployerApproval() {
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-sm font-medium text-gray-700">Status:</span>
-                      {getStatusBadge(selectedEmployer.status)}
+                      {getStatusBadge(pendingEmployers.find(e => e._id === selectedEmployer._id) ? 'pending' : 'approved')}
                     </div>
                     <p className="text-sm text-gray-600">
                       Applied on: {formatDate(selectedEmployer.createdAt)}
@@ -529,16 +520,16 @@ function AdminEmployerApproval() {
                     )}
                   </div>
                   
-                  {selectedEmployer.status === 'pending' && (
+                  {pendingEmployers.find(e => e._id === selectedEmployer._id) && (
                     <div className="flex gap-3">
                       <button
-                        onClick={() => handleApprove(selectedEmployer.id)}
+                        onClick={() => handleApprove(selectedEmployer._id)}
                         className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
                       >
                         Approve Application
                       </button>
                       <button
-                        onClick={() => handleReject(selectedEmployer.id)}
+                        onClick={() => handleReject(selectedEmployer._id)}
                         className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
                       >
                         Reject Application

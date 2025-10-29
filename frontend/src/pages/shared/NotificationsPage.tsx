@@ -103,7 +103,7 @@ function NotificationsPage() {
     switch (type) {
       case 'job':
       case 'application':
-        return <Briefcase className="h-5 w-5 text-blue-500" />;
+        return <Briefcase className="h-5 w-5 text-primary-600" />;
       case 'mentorship':
         return <User className="h-5 w-5 text-green-500" />;
       case 'verification':
@@ -170,7 +170,7 @@ function NotificationsPage() {
                 <div
                   key={notification.id}
                   className={`p-4 hover:bg-gray-50 transition-colors ${
-                    !notification.read ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                    !notification.read ? 'bg-primary-50 border-l-4 border-l-primary-500' : ''
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -206,7 +206,7 @@ function NotificationsPage() {
                       {!notification.read && (
                         <button
                           onClick={() => markAsRead(notification.id)}
-                          className="text-blue-600 hover:text-blue-700 p-1"
+                          className="text-primary-600 hover:text-primary-700 p-1"
                           title="Mark as read"
                         >
                           <CheckCircle className="h-4 w-4" />

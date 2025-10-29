@@ -247,7 +247,7 @@ function JobSeekerDashboard() {
                           <p className="font-medium text-gray-900 text-lg">{application.jobTitle}</p>
                           <p className="text-sm text-gray-600 mt-1">Applied on {new Date(application.appliedDate).toLocaleDateString()}</p>
                           <p className="text-sm text-purple-700 font-medium mt-2">
-                            {application.status === 'interview-scheduled' ? '🎉 Interview Scheduled!' : '✨ Shortlisted'}
+                            {application.status === 'interview-scheduled' ? 'Interview Scheduled!' : 'Shortlisted'}
                           </p>
                         </div>
                         <div className="text-right ml-4">

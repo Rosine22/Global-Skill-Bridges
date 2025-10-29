@@ -6,7 +6,6 @@ import {
   MapPin, 
   Award, 
   User, 
-  MessageSquare,
   Star,
   Eye,
   Clock
@@ -34,13 +33,9 @@ interface Candidate {
 function TalentSearchPage() {
   // Handler for viewing profile
   const handleViewProfile = (candidateId: string) => {
-    window.location.href = `/employer/talent-profile/${candidateId}`;
+    window.location.href = `/profile/${candidateId}`;
   };
 
-  // Handler for contacting candidate
-  const handleContactCandidate = (candidateId: string) => {
-    window.location.href = `/employer/contact-talent/${candidateId}`;
-  };
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [skillsFilter, setSkillsFilter] = useState('');
@@ -354,13 +349,6 @@ function TalentSearchPage() {
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         View Profile
-                      </button>
-                      <button 
-                        className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center"
-                        onClick={() => handleContactCandidate(candidate.id)}
-                      >
-                        <MessageSquare className="h-4 w-4 mr-2" />
-                        Contact
                       </button>
                     </div>
                   </div>

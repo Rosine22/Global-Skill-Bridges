@@ -80,7 +80,7 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
           {/* Success Message */}
           {updateSuccess && (
             <div className="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
-              <p className="font-medium text-lg">✓ Application status updated successfully!</p>
+              <p className="font-medium">Application status updated successfully!</p>
             </div>
           )}
 
@@ -93,10 +93,10 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
                   <User className="h-12 w-12 text-blue-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-gray-900">{application.applicantName}</h3>
-                  <p className="text-gray-700 text-lg">{application.applicantEmail || 'No email provided'}</p>
+                  <h3 className="text-xl font-bold text-gray-900">{application.applicantName}</h3>
+                  <p className="text-gray-700">{application.applicantEmail || 'No email provided'}</p>
                   <div className="mt-3 flex items-center space-x-4">
-                    <span className="text-gray-600">Applied {formatDate(application.appliedDate)}</span>
+                    <span className="text-gray-600 text-sm">Applied {formatDate(application.appliedDate)}</span>
                     <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
                       application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                       application.status === 'reviewed' ? 'bg-blue-100 text-blue-800' :
@@ -115,18 +115,18 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
             {/* Personal Information */}
             {application.personalInfo && (
               <div className="bg-white border rounded-lg p-6">
-                <h4 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
                   <User className="h-6 w-6 mr-2 text-blue-600" />
                   Contact Information
                 </h4>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
-                    <p className="text-gray-900 bg-gray-50 rounded p-3 text-lg">{application.applicantEmail || 'Not provided'}</p>
+                    <p className="text-gray-900 bg-gray-50 rounded p-3">{application.applicantEmail || 'Not provided'}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Phone Number</label>
-                    <p className="text-gray-900 bg-gray-50 rounded p-3 text-lg">{application.personalInfo.phone || 'Not provided'}</p>
+                    <p className="text-gray-900 bg-gray-50 rounded p-3">{application.personalInfo.phone || 'Not provided'}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">LinkedIn Profile</label>
@@ -135,12 +135,12 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
                         href={application.personalInfo.linkedIn} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700 bg-gray-50 rounded p-3 block text-lg"
+                        className="text-blue-600 hover:text-blue-700 bg-gray-50 rounded p-3 block"
                       >
                         {application.personalInfo.linkedIn}
                       </a>
                     ) : (
-                      <p className="text-gray-500 bg-gray-50 rounded p-3 text-lg">Not provided</p>
+                      <p className="text-gray-500 bg-gray-50 rounded p-3">Not provided</p>
                     )}
                   </div>
                   <div>
@@ -150,17 +150,17 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
                         href={application.personalInfo.website} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700 bg-gray-50 rounded p-3 block text-lg"
+                        className="text-blue-600 hover:text-blue-700 bg-gray-50 rounded p-3 block"
                       >
                         {application.personalInfo.website}
                       </a>
                     ) : (
-                      <p className="text-gray-500 bg-gray-50 rounded p-3 text-lg">Not provided</p>
+                      <p className="text-gray-500 bg-gray-50 rounded p-3">Not provided</p>
                     )}
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Available Start Date</label>
-                    <p className="text-gray-900 bg-gray-50 rounded p-3 text-lg">
+                    <p className="text-gray-900 bg-gray-50 rounded p-3">
                       {application.personalInfo.availableStartDate ? 
                         formatDate(application.personalInfo.availableStartDate) : 
                         'Not specified'
@@ -174,12 +174,12 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
             {/* Cover Letter */}
             {application.coverLetter && (
               <div className="bg-white border rounded-lg p-6">
-                <h4 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
                   <MessageSquare className="h-6 w-6 mr-2 text-green-600" />
                   Cover Letter
                 </h4>
                 <div className="bg-green-50 rounded-lg p-6">
-                  <p className="text-gray-800 leading-relaxed text-lg whitespace-pre-wrap">
+                  <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
                     {application.coverLetter}
                   </p>
                 </div>
@@ -189,9 +189,9 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
             {/* Why Interested */}
             {application.whyInterested && (
               <div className="bg-white border rounded-lg p-6">
-                <h4 className="text-xl font-bold text-gray-900 mb-4">Why are you interested in this position?</h4>
+                <h4 className="text-lg font-bold text-gray-900 mb-4">Why are you interested in this position?</h4>
                 <div className="bg-blue-50 rounded-lg p-6">
-                  <p className="text-gray-800 leading-relaxed text-lg whitespace-pre-wrap">
+                  <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
                     {application.whyInterested}
                   </p>
                 </div>
@@ -201,9 +201,9 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
             {/* Additional Notes */}
             {application.additionalNotes && (
               <div className="bg-white border rounded-lg p-6">
-                <h4 className="text-xl font-bold text-gray-900 mb-4">Additional Notes</h4>
+                <h4 className="text-lg font-bold text-gray-900 mb-4">Additional Notes</h4>
                 <div className="bg-yellow-50 rounded-lg p-6">
-                  <p className="text-gray-800 leading-relaxed text-lg whitespace-pre-wrap">
+                  <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
                     {application.additionalNotes}
                   </p>
                 </div>
@@ -213,20 +213,20 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
             {/* Salary Expectations */}
             {application.salaryExpectation && (
               <div className="bg-white border rounded-lg p-6">
-                <h4 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
                   <Star className="h-6 w-6 mr-2 text-yellow-600" />
                   Salary Expectations
                 </h4>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Expected Salary Range</label>
-                    <p className="text-gray-900 bg-gray-50 rounded p-3 text-xl font-bold">
+                    <p className="text-gray-900 bg-gray-50 rounded p-3 font-bold">
                       {application.salaryExpectation.currency} {application.salaryExpectation.min} - {application.salaryExpectation.max}
                     </p>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Negotiable</label>
-                    <p className={`font-semibold rounded p-3 text-lg ${
+                    <p className={`font-semibold rounded p-3 ${
                       application.salaryExpectation.isNegotiable 
                         ? 'text-green-800 bg-green-100' 
                         : 'text-red-800 bg-red-100'

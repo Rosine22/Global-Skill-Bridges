@@ -1501,9 +1501,8 @@ class EmailService {
     const loginUrl = `${this.baseUrl}/login`;
     const supportUrl = `${this.baseUrl}/support`;
     
-    const statusColor = isApproved ? '#28a745' : '#dc3545';
-    const statusText = isApproved ? 'Approved' : 'Rejected';
-    const statusIcon = isApproved ? '✅' : '❌';
+  const statusColor = isApproved ? '#28a745' : '#dc3545';
+  const statusText = isApproved ? 'Approved' : 'Rejected';
 
     // Extract actual user data from database
     const employerName = employer.name || 'Valued Employer';
@@ -1610,7 +1609,7 @@ class EmailService {
       </head>
       <body>
         <div class="header">
-          <h1>${statusIcon} Employer Account ${statusText}</h1>
+          <h1>Employer Account ${statusText}</h1>
         </div>
         <div class="content">
           <h2>Dear ${employerName},</h2>
@@ -1622,7 +1621,7 @@ class EmailService {
           </div>
 
           <div class="account-details">
-            <h3 style="margin-top: 0;">📋 Account Information</h3>
+            <h3 style="margin-top: 0;">Account Information</h3>
             <p><strong>Company Name:</strong> ${companyName}</p>
             <p><strong>Contact Person:</strong> ${employerName}</p>
             <p><strong>Email:</strong> ${employer.email}</p>
@@ -1633,17 +1632,17 @@ class EmailService {
 
           ${isApproved ? `
           <div class="info-box">
-            <p style="margin: 0;"><strong>🎉 Congratulations!</strong> Your employer account has been approved and is now active.</p>
+            <p style="margin: 0;"><strong>Congratulations!</strong> Your employer account has been approved and is now active.</p>
           </div>
 
           <div class="next-steps">
             <h3>Next Steps:</h3>
             <ul>
-              <li>✓ Log in to your employer dashboard</li>
-              <li>✓ Complete your company profile</li>
-              <li>✓ Post your first job opening</li>
-              <li>✓ Start connecting with talented candidates</li>
-              <li>✓ Explore our talent search features</li>
+              <li>Log in to your employer dashboard</li>
+              <li>Complete your company profile</li>
+              <li>Post your first job opening</li>
+              <li>Start connecting with talented candidates</li>
+              <li>Explore our talent search features</li>
             </ul>
           </div>
 
@@ -1773,7 +1772,7 @@ class EmailService {
     `;
 
     return {
-      subject: `${statusIcon} Your Employer Account Has Been ${statusText} - Global Skills Bridge`,
+      subject: `Your Employer Account Has Been ${statusText} - Global Skills Bridge`,
       html,
       text
     };

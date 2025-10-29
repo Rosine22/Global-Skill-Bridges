@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useUserContext, Application } from '../../contexts/UserContext';
 import DashboardLayout from '../../components/DashboardLayout';
 import ApplicationReviewModal from '../../components/ApplicationReviewModal';
+import { getApiUrl } from '../../config/api';
 
 function EmployerDashboard() {
   const { user } = useAuth();
@@ -24,16 +25,6 @@ function EmployerDashboard() {
   const handlePostNewJob = () => {
     // Navigate to job posting page
     window.location.href = '/employer/post-job';
-  };
-
-  const handleViewProfile = () => {
-    // Navigate to profile page
-    window.location.href = '/profile';
-  };
-
-  const handleContact = () => {
-    // Navigate to messages
-    window.location.href = '/messages';
   };
 
   const handleViewApplicationDetails = (applicationId: string) => {
@@ -68,20 +59,6 @@ function EmployerDashboard() {
             <p className="mt-1 text-sm text-gray-600">
               Manage your job postings and review applications.
             </p>
-          </div>
-          <div className="flex space-x-2 mt-4 md:mt-0">
-            <button
-              className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
-              onClick={handleViewProfile}
-            >
-              View Profile
-            </button>
-            <button
-              className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700"
-              onClick={handleContact}
-            >
-              Contact
-            </button>
           </div>
         </div>
 
@@ -259,13 +236,65 @@ function EmployerDashboard() {
                       </button>
                       <button
                         className="text-green-600 hover:text-green-500 text-xs font-medium"
-                        onClick={() => window.open(`/cv/${application.id}`, '_blank')}
+                        onClick={async () => {
+                          try {
+                            const token = localStorage.getItem('token');
+                            const response = await fetch(getApiUrl(`/api/applications/${application.id}/cv/preview`), {
+                              headers: {
+                                'Authorization': `Bearer ${token}`
+                              }
+                            });
+                            
+                            if (!response.ok) {
+                              throw new Error('Failed to fetch CV preview');
+                            }
+                            
+                            const data = await response.json();
+                            if (data.success && data.data.previewUrl) {
+                              window.open(data.data.previewUrl, '_blank');
+                            } else {
+                              alert('CV preview URL not available');
+                            }
+                          } catch (error) {
+                            console.error('Error fetching CV preview:', error);
+                            alert('Failed to preview CV. Please try again.');
+                          }
+                        }}
                       >
                         Preview CV
                       </button>
                       <button
                         className="text-gray-600 hover:text-gray-500 text-xs font-medium"
-                        onClick={() => window.location.href = `/cv/download/${application.id}`}
+                        onClick={async () => {
+                          try {
+                            const token = localStorage.getItem('token');
+                            const response = await fetch(getApiUrl(`/api/applications/${application.id}/cv/download`), {
+                              headers: {
+                                'Authorization': `Bearer ${token}`
+                              }
+                            });
+                            
+                            if (!response.ok) {
+                              throw new Error('Failed to fetch CV download');
+                            }
+                            
+                            const data = await response.json();
+                            if (data.success && data.data.downloadUrl) {
+                              const link = document.createElement('a');
+                              link.href = data.data.downloadUrl;
+                              link.download = data.data.fileName || 'resume.pdf';
+                              link.target = '_blank';
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            } else {
+                              alert('CV download URL not available');
+                            }
+                          } catch (error) {
+                            console.error('Error downloading CV:', error);
+                            alert('Failed to download CV. Please try again.');
+                          }
+                        }}
                       >
                         Download CV
                       </button>

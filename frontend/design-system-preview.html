@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Skills Bridge - Design System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            300: '#5eead4',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        },
+                        secondary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">Global Skills Bridge</h1>
+        <p class="text-xl text-gray-600 mb-8">Design System Color Guide</p>
+
+        <!-- Primary Colors -->
+        <section class="mb-12 bg-white rounded-lg shadow-sm p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Primary Color (Teal)</h2>
+            <p class="text-gray-600 mb-6">Use for main actions, primary CTAs, and brand elements</p>
+            <div class="grid grid-cols-5 gap-4 mb-6">
+                <div>
+                    <div class="h-20 bg-primary-50 rounded-lg mb-2"></div>
+                    <p class="text-sm text-gray-600">primary-50</p>
+                    <p class="text-xs text-gray-500">#f0fdfa</p>
+                </div>
+                <div>
+                    <div class="h-20 bg-primary-100 rounded-lg mb-2"></div>
+                    <p class="text-sm text-gray-600">primary-100</p>
+                    <p class="text-xs text-gray-500">#ccfbf1</p>
+                </div>
+                <div>
+                    <div class="h-20 bg-primary-600 rounded-lg mb-2"></div>
+                    <p class="text-sm font-bold text-gray-900">primary-600</p>
+                    <p class="text-xs text-gray-500">#0d9488</p>
+                    <p class="text-xs text-primary-600 font-bold">← Main</p>
+                </div>
+                <div>
+                    <div class="h-20 bg-primary-700 rounded-lg mb-2"></div>
+                    <p class="text-sm font-bold text-gray-900">primary-700</p>
+                    <p class="text-xs text-gray-500">#0f766e</p>
+                    <p class="text-xs text-primary-600">← Hover</p>
+                </div>
+                <div>
+                    <div class="h-20 bg-primary-800 rounded-lg mb-2"></div>
+                    <p class="text-sm text-gray-600">primary-800</p>
+                    <p class="text-xs text-gray-500">#115e59</p>
+                </div>
+            </div>
+            <div class="flex space-x-4">
+                <button class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-medium">
+                    Primary Button
+                </button>
+                <button class="border-2 border-primary-600 text-primary-600 hover:bg-primary-50 px-6 py-3 rounded-lg font-medium">
+                    Outline Button
+                </button>
+                <span class="px-4 py-2 bg-primary-100 text-primary-800 rounded-full font-medium">
+                    Primary Badge
+                </span>
+            </div>
+        </section>
+
+        <!-- Secondary Colors -->
+        <section class="mb-12 bg-white rounded-lg shadow-sm p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Secondary Color (Blue)</h2>
+            <p class="text-gray-600 mb-6">Use for secondary actions and information</p>
+            <div class="grid grid-cols-5 gap-4 mb-6">
+                <div>
+                    <div class="h-20 bg-secondary-50 rounded-lg mb-2"></div>
+                    <p class="text-sm text-gray-600">secondary-50</p>
+                    <p class="text-xs text-gray-500">#f0f9ff</p>
+                </div>
+                <div>
+                    <div class="h-20 bg-secondary-100 rounded-lg mb-2"></div>
+                    <p class="text-sm text-gray-600">secondary-100</p>
+                    <p class="text-xs text-gray-500">#e0f2fe</p>
+                </div>
+                <div>
+                    <div class="h-20 bg-secondary-600 rounded-lg mb-2"></div>
+                    <p class="text-sm font-bold text-gray-900">secondary-600</p>
+                    <p class="text-xs text-gray-500">#0284c7</p>
+                    <p class="text-xs text-secondary-600 font-bold">← Main</p>
+                </div>
+                <div>
+                    <div class="h-20 bg-secondary-700 rounded-lg mb-2"></div>
+                    <p class="text-sm font-bold text-gray-900">secondary-700</p>
+                    <p class="text-xs text-gray-500">#0369a1</p>
+                    <p class="text-xs text-secondary-600">← Hover</p>
+                </div>
+                <div>
+                    <div class="h-20 bg-secondary-800 rounded-lg mb-2"></div>
+                    <p class="text-sm text-gray-600">secondary-800</p>
+                    <p class="text-xs text-gray-500">#075985</p>
+                </div>
+            </div>
+            <div class="flex space-x-4">
+                <button class="bg-secondary-600 hover:bg-secondary-700 text-white px-6 py-3 rounded-lg font-medium">
+                    Secondary Button
+                </button>
+                <span class="px-4 py-2 bg-secondary-100 text-secondary-800 rounded-full font-medium">
+                    Secondary Badge
+                </span>
+            </div>
+        </section>
+
+        <!-- Status Colors -->
+        <section class="mb-12 bg-white rounded-lg shadow-sm p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Status Colors</h2>
+            
+            <div class="grid grid-cols-3 gap-6">
+                <!-- Success -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Success (Green)</h3>
+                    <p class="text-sm text-gray-600 mb-4">Approvals, completions, success states</p>
+                    <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium w-full mb-2">
+                        Approve
+                    </button>
+                    <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium inline-block">
+                        Approved
+                    </span>
+                </div>
+
+                <!-- Warning -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Warning (Yellow)</h3>
+                    <p class="text-sm text-gray-600 mb-4">Pending states, cautions</p>
+                    <button class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-medium w-full mb-2">
+                        Review
+                    </button>
+                    <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium inline-block">
+                        Pending
+                    </span>
+                </div>
+
+                <!-- Danger -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Danger (Red)</h3>
+                    <p class="text-sm text-gray-600 mb-4">Deletions, errors, rejections</p>
+                    <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium w-full mb-2">
+                        Delete
+                    </button>
+                    <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium inline-block">
+                        Rejected
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Usage Examples -->
+        <section class="mb-12 bg-white rounded-lg shadow-sm p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Usage Examples</h2>
+            
+            <div class="space-y-6">
+                <!-- Form Example -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Form Actions</h3>
+                    <div class="flex space-x-3">
+                        <button class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-medium">
+                            Save Changes
+                        </button>
+                        <button class="border-2 border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 rounded-lg font-medium">
+                            Cancel
+                        </button>
+                        <button class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Status Cards -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Status Indicators</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm font-medium">Active</span>
+                        <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">Approved</span>
+                        <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">Pending</span>
+                        <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">Rejected</span>
+                        <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">Inactive</span>
+                    </div>
+                </div>
+
+                <!-- Action Grid -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Common Actions</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium">
+                            Submit Application
+                        </button>
+                        <button class="bg-secondary-600 hover:bg-secondary-700 text-white px-4 py-2 rounded-lg font-medium">
+                            Learn More
+                        </button>
+                        <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium">
+                            Approve Request
+                        </button>
+                        <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium">
+                            Reject Application
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Reference -->
+        <section class="bg-gradient-to-r from-primary-600 to-secondary-600 rounded-lg p-8 text-white">
+            <h2 class="text-2xl font-bold mb-4">Quick Reference</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-semibold mb-2">Color Usage</h3>
+                    <ul class="space-y-1 text-primary-100 text-sm">
+                        <li>✓ <strong>Primary (Teal):</strong> Main actions, brand</li>
+                        <li>✓ <strong>Secondary (Blue):</strong> Alternative actions</li>
+                        <li>✓ <strong>Green:</strong> Success, approvals</li>
+                        <li>✓ <strong>Red:</strong> Danger, deletions</li>
+                        <li>✓ <strong>Yellow:</strong> Warnings, pending</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-2">Button Hierarchy</h3>
+                    <ul class="space-y-1 text-primary-100 text-sm">
+                        <li>1. <strong>Primary Button:</strong> Most important action</li>
+                        <li>2. <strong>Secondary Button:</strong> Less important</li>
+                        <li>3. <strong>Outline Button:</strong> Tertiary actions</li>
+                        <li>4. <strong>Ghost Button:</strong> Minimal actions</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <footer class="mt-12 text-center text-gray-500 text-sm">
+            <p>Global Skills Bridge Design System © 2024</p>
+            <p class="mt-2">See STYLE_GUIDE.md for complete documentation</p>
+        </footer>
+    </div>
+</body>
+</html>

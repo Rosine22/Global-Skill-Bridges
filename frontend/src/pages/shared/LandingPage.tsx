@@ -16,21 +16,21 @@ function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Globe className="h-8 w-8 text-blue-600" />
+              <Globe className="h-8 w-8 text-teal-600" />
               <span className="ml-2 text-xl font-bold text-gray-900">Global Skills Bridge</span>
             </div>
             <div className="flex items-center space-x-4">
               <Link
                 to="/test-employer-data"
-                className="text-blue-500 hover:text-blue-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                className="text-blue-600 hover:text-blue-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Test Data
               </Link>
               <Link
                 to="/admin/employer-approvals"
-                className="text-green-500 hover:text-green-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-green-100 border border-green-300"
+                className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
               >
-                🔍 Admin Approvals
+                Admin Approvals
               </Link>
               <Link
                 to="/login"
@@ -40,7 +40,7 @@ function LandingPage() {
               </Link>
               <Link
                 to="/register"
-                className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm"
               >
                 Get Started
               </Link>
@@ -55,26 +55,26 @@ function LandingPage() {
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
               Bridge Your Skills to
-              <span className="text-primary-600"> Global Opportunities</span>
+                <span className="text-teal-600"> Global Opportunities</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Connect TVET graduates with verified global employment opportunities. 
               Secure your credentials, find your dream job, and get mentorship from industry experts.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/register"
-                className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-4 rounded-lg text-lg font-semibold flex items-center justify-center transition-colors"
-              >
-                Start Your Journey
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-              <Link
-                to="/login"
-                className="border border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors"
-              >
-                I'm an Employer
-              </Link>
+                <Link
+                  to="/register"
+                  className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-4 rounded-lg text-lg font-semibold flex items-center justify-center transition-colors"
+                >
+                  Start Your Journey
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+                <Link
+                  to="/login"
+                  className="border border-teal-600 text-teal-600 hover:bg-teal-600 hover:text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors"
+                >
+                  I'm an Employer
+                </Link>
             </div>
           </div>
         </div>
@@ -94,7 +94,7 @@ function LandingPage() {
           
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center p-8 bg-gray-50 rounded-xl">
-              <Shield className="h-12 w-12 text-primary-600 mx-auto mb-6" />
+           <Shield className="h-12 w-12 text-teal-600 mx-auto mb-6" />
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Skills Verification</h3>
               <p className="text-gray-600">
                 Blockchain-secured credential verification system ensuring trust and transparency for employers worldwide.
@@ -102,15 +102,15 @@ function LandingPage() {
             </div>
             
             <div className="text-center p-8 bg-gray-50 rounded-xl">
-              <Briefcase className="h-12 w-12 text-secondary-600 mx-auto mb-6" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Global Job Matching</h3>
+              <Briefcase className="h-12 w-12 text-blue-600 mx-auto mb-6" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Global Job Matching</h3>
               <p className="text-gray-600">
                 Connect with international employers seeking your specific skills and qualifications.
               </p>
             </div>
             
             <div className="text-center p-8 bg-gray-50 rounded-xl">
-              <Users className="h-12 w-12 text-purple-600 mx-auto mb-6" />
+           <Users className="h-12 w-12 text-teal-400 mx-auto mb-6" />
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Expert Mentorship</h3>
               <p className="text-gray-600">
                 Get guidance from Rwandan diaspora and industry experts to accelerate your career growth.
@@ -121,24 +121,24 @@ function LandingPage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-20 bg-primary-600">
+      <section className="py-20 bg-teal-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
               <div className="text-3xl font-bold text-white mb-2">5,000+</div>
-              <div className="text-primary-100">TVET Graduates</div>
+                    <div className="text-teal-100">TVET Graduates</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-white mb-2">500+</div>
-              <div className="text-primary-100">Global Employers</div>
+                    <div className="text-teal-100">Global Employers</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-white mb-2">200+</div>
-              <div className="text-primary-100">Expert Mentors</div>
+                    <div className="text-teal-100">Expert Mentors</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-white mb-2">95%</div>
-              <div className="text-primary-100">Success Rate</div>
+                    <div className="text-teal-100">Success Rate</div>
             </div>
           </div>
         </div>
@@ -154,7 +154,7 @@ function LandingPage() {
           
           <div className="grid md:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-primary-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 text-xl font-bold">
+              <div className="w-16 h-16 bg-teal-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 text-xl font-bold">
                 1
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">Create Profile</h3>

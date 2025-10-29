@@ -140,7 +140,7 @@ function ApplicationsPage() {
         {/* Status Update Notification */}
         {statusUpdateNotification && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
-            <p className="font-medium">✓ {statusUpdateNotification}</p>
+            <p className="font-medium">{statusUpdateNotification}</p>
           </div>
         )}
         <div className="flex justify-between items-center">
