@@ -10,7 +10,6 @@ import {
   Building2,
   Mail,
   MapPin,
-  Eye,
   Search,
   Shield,
   AlertCircle
@@ -26,6 +25,10 @@ type BackendEmployer = {
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
+  avatar?: {
+    url?: string;
+    public_id?: string;
+  };
   companyInfo?: {
     name?: string;
     industry?: string;
@@ -347,8 +350,16 @@ function AdminEmployerApproval() {
                 <div className="p-6">
                   {/* Logo and Company Name */}
                   <div className="flex items-start mb-4">
-                    <div className="h-14 w-14 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold border-2 border-gray-200 flex-shrink-0">
-                      {(employer.companyInfo?.name || 'E')[0]?.toUpperCase()}
+                    <div className="h-14 w-14 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold border-2 border-gray-200 flex-shrink-0 overflow-hidden">
+                      {employer.avatar?.url ? (
+                        <img 
+                          src={employer.avatar.url} 
+                          alt={employer.companyInfo?.name || 'Company logo'} 
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        (employer.companyInfo?.name || 'E')[0]?.toUpperCase()
+                      )}
                     </div>
                     <div className="ml-4 flex-1 min-w-0">
                       <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
@@ -379,7 +390,6 @@ function AdminEmployerApproval() {
                     {getStatusBadge(activeTab)}
                     <button className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center">
                       View Details
-                      <Eye className="h-4 w-4 ml-1" />
                     </button>
                   </div>
                 </div>
@@ -396,8 +406,16 @@ function AdminEmployerApproval() {
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold border-2 border-gray-200 shadow-sm">
-                    {(selectedEmployer.companyInfo?.name || 'E')[0]?.toUpperCase()}
+                  <div className="h-16 w-16 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold border-2 border-gray-200 shadow-sm overflow-hidden">
+                    {selectedEmployer.avatar?.url ? (
+                      <img 
+                        src={selectedEmployer.avatar.url} 
+                        alt={selectedEmployer.companyInfo?.name || 'Company logo'} 
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      (selectedEmployer.companyInfo?.name || 'E')[0]?.toUpperCase()
+                    )}
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900">{selectedEmployer.companyInfo?.name || 'Unknown Company'}</h2>

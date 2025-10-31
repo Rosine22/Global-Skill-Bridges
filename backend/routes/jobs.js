@@ -1,6 +1,6 @@
 const express = require("express");
 const { body, query, validationResult } = require("express-validator");
-const Job = require("../models/Job").default;
+const Job = require("../models/Job");
 const Application = require("../models/Application");
 const { protect, authorize, optionalAuth } = require("../middleware/auth");
 

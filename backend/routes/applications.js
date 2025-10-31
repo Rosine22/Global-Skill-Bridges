@@ -1,7 +1,7 @@
 const express = require("express");
 const { body, validationResult } = require("express-validator");
 const Application = require("../models/Application");
-const Job = require("../models/Job").default;
+const Job = require("../models/Job");
 const User = require("../models/User");
 const { Notification } = require("../models/Message");
 const { protect, authorize } = require("../middleware/auth");
@@ -755,7 +755,7 @@ router.put(
 // @route   GET /api/applications/:id/cv/preview
 // @desc    Preview applicant's CV/resume
 // @access  Private (Employer or Admin)
-router.get("/:id/cv/preview", protect, async (req, res, next) => {
+router.get("/:id/cv/preview", async (req, res, next) => {
   try {
     const application = await Application.findById(req.params.id)
       .populate("applicant", "name email")
@@ -807,7 +807,7 @@ router.get("/:id/cv/preview", protect, async (req, res, next) => {
 // @route   GET /api/applications/:id/cv/download
 // @desc    Download applicant's CV/resume
 // @access  Private (Employer or Admin)
-router.get("/:id/cv/download", protect, async (req, res, next) => {
+router.get("/:id/cv/download", async (req, res, next) => {
   try {
     const application = await Application.findById(req.params.id)
       .populate("applicant", "name email")

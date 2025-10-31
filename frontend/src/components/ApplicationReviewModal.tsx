@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { Application } from '../contexts/UserContext';
-import { User, Star, Send, FileText, Eye, Download, MessageSquare } from 'lucide-react';
+import { User, Star, Send, FileText,Download, MessageSquare } from 'lucide-react';
 import { getApiUrl } from '../config/api';
 
 interface ApplicationReviewModalProps {
@@ -284,7 +284,6 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
                       }}
                       className="flex items-center px-4 py-2 text-blue-600 border-2 border-blue-600 rounded-lg hover:bg-blue-50 font-semibold text-sm"
                     >
-                      <Eye className="h-4 w-4 mr-1" />
                       Preview CV
                     </button>
                     <button 
@@ -339,7 +338,7 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
             {application.portfolio && (
               <div className="bg-white border rounded-lg p-6">
                 <h4 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                  <Eye className="h-6 w-6 mr-2 text-purple-600" />
+                  <FileText className="h-6 w-6 mr-2 text-purple-600" />
                   Portfolio
                 </h4>
                 <div className="bg-purple-50 rounded-lg p-6">
@@ -385,7 +384,6 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
                       </div>
                       <div className="flex space-x-3">
                         <button className="flex items-center px-4 py-2 text-green-600 border border-green-600 rounded-lg hover:bg-green-100 font-medium">
-                          <Eye className="h-4 w-4 mr-2" />
                           View
                         </button>
                         <button className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
@@ -427,14 +425,14 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
 
             {/* RATING AND REVIEW SECTION - AT THE BOTTOM */}
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-3 border-purple-300 rounded-xl p-8 mt-12 shadow-lg">
-              <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center flex items-center justify-center">
+              <h3 className="text-xl font-bold text-gray-900 mb-8 text-center flex items-center justify-center">
                 <Star className="h-8 w-8 mr-3 text-purple-600" />
                 Application Review & Decision
               </h3>
               
               {/* Rating Section */}
               <div className="mb-8">
-                <label className="block text-xl font-bold text-gray-900 mb-4 text-center">Rate This Candidate</label>
+                <label className="block text-lg font-bold text-gray-900 mb-4 text-center">Rate This Candidate</label>
                 <div className="flex items-center justify-center space-x-3 mb-4">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
@@ -446,7 +444,7 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
                     </button>
                   ))}
                 </div>
-                <p className="text-center text-xl font-semibold text-gray-800">
+                <p className="text-center text-sm font-semibold text-gray-800">
                   {feedback.rating === 0 ? 'Click stars to rate this candidate' : 
                    feedback.rating === 1 ? '⭐ Poor fit for the role' :
                    feedback.rating === 2 ? '⭐⭐ Below average candidate' :
@@ -458,33 +456,33 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
 
               {/* Internal Comments */}
               <div className="mb-8">
-                <label className="block text-xl font-bold text-gray-900 mb-4">Internal Review Comments</label>
+                <label className="block text-lg font-bold text-gray-900 mb-4">Internal Review Comments</label>
                 <textarea
                   value={feedback.comments}
                   onChange={(e) => setFeedback(prev => ({ ...prev, comments: e.target.value }))}
                   rows={5}
-                  className="w-full px-6 py-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-lg"
+                  className="w-full px-6 py-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
                   placeholder="Add detailed feedback about the candidate's qualifications, experience, fit for the role, interview notes, strengths, areas of concern, etc..."
                 />
                 <p className="text-sm text-gray-600 mt-3">
-                  💡 These comments are confidential and for internal hiring team use only.
+                  These comments are confidential and for internal hiring team use only.
                 </p>
               </div>
 
               {/* Status Update */}
               <div className="mb-8">
-                <label className="block text-xl font-bold text-gray-900 mb-4">Update Application Status</label>
+                <label className="block text-lg font-bold text-gray-900 mb-4">Update Application Status</label>
                 <select
                   onChange={(e) => setFeedback(prev => ({ ...prev, decision: e.target.value }))}
                   value={feedback.decision}
-                  className="w-full px-6 py-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-xl font-medium"
+                  className="w-full px-6 py-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm font-medium"
                 >
                   <option value="">Select new status...</option>
-                  <option value="reviewed">✅ Mark as Reviewed</option>
-                  <option value="shortlisted">⭐ Shortlist Candidate</option>
-                  <option value="interview-scheduled">📅 Schedule Interview</option>
-                  <option value="rejected">❌ Reject Application</option>
-                  <option value="hired">🎉 Mark as Hired</option>
+                  <option value="reviewed">Mark as Reviewed</option>
+                  <option value="shortlisted"> Shortlist Candidate</option>
+                  <option value="interview-scheduled">Schedule Interview</option>
+                  <option value="rejected"> Reject Application</option>
+                  <option value="hired">Mark as Hired</option>
                 </select>
               </div>
 
@@ -492,7 +490,7 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
               <div className="flex justify-center space-x-6 mb-8">
                 <button
                   onClick={onClose}
-                  className="px-8 py-4 text-gray-700 border-2 border-gray-400 rounded-lg hover:bg-gray-50 font-semibold text-xl"
+                  className="px-8 py-4 text-gray-700 border-2 border-gray-400 rounded-lg hover:bg-gray-50 font-semibold text-sm"
                 >
                   Cancel Review
                 </button>
@@ -517,16 +515,15 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
                     }
                   }}
                   disabled={!feedback.decision || isUpdating}
-                  className="px-12 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-xl shadow-xl"
+                  className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm shadow-xl"
                 >
-                  {isUpdating ? '⏳ Updating Status...' : updateSuccess ? '✅ Status Updated!' : '🚀 Update Application Status'}
+                  {isUpdating ? ' Updating Status...' : updateSuccess ? ' Status Updated!' : ' Update Application Status'}
                 </button>
               </div>
 
               {/* Send Message Section */}
               <div className="pt-6 border-t-2 border-purple-200">
-                <h4 className="font-bold text-gray-900 mb-4 text-xl flex items-center">
-                  <Send className="h-6 w-6 mr-2 text-purple-600" />
+                <h4 className="font-bold text-gray-900 mb-4 text-lg flex items-center">
                   Send Message to Applicant
                 </h4>
                 <div className="flex space-x-4">
@@ -535,7 +532,7 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Type your message to the applicant..."
-                    className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-lg"
+                    className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
                   />
                   <button
                     onClick={() => {
@@ -545,14 +542,14 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
                       }
                     }}
                     disabled={!message.trim()}
-                    className="flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-semibold text-lg"
+                    className="flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-semibold text-sm"
                   >
                     <Send className="h-5 w-5 mr-2" />
                     Send Message
                   </button>
                 </div>
                 <p className="text-sm text-gray-600 mt-3">
-                  📧 This message will be sent directly to the applicant's email address.
+                  This message will be sent directly to the applicant's email address.
                 </p>
               </div>
             </div>

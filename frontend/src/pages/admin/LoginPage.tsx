@@ -16,15 +16,19 @@ function AdminLoginPage() {
     setError('');
     setLoading(true);
 
-    const success = await login(email, password);
-    
-    if (success) {
-      navigate('/admin/employer-approvals');
-    } else {
-      setError('Invalid admin credentials');
+    try {
+      const result = await login(email, password);
+      
+      if (result.success) {
+        navigate('/admin/employer-approvals');
+      } else {
+        setError(result.message || 'Invalid admin credentials');
+      }
+    } catch {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (

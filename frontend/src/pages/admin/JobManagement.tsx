@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { useUserContext } from '../../contexts/UserContext';
-import { Briefcase, Search, Eye, CreditCard as Edit3, Trash2, CheckCircle, XCircle, AlertTriangle, MapPin, Calendar, Users, DollarSign, Building } from 'lucide-react';
+import { Briefcase, Search, CreditCard as Edit3, Trash2, CheckCircle, XCircle, AlertTriangle, MapPin, Calendar, Users, DollarSign, Building } from 'lucide-react';
 
 function AdminJobManagementPage() {
   const { jobs } = useUserContext();
@@ -216,7 +216,6 @@ function AdminJobManagementPage() {
                           className="text-blue-600 hover:text-blue-700 p-1"
                           title="View details"
                         >
-                          <Eye className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleJobAction(job.id, 'approve')}

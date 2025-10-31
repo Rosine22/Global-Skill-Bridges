@@ -21,12 +21,6 @@ function LandingPage() {
             </div>
             <div className="flex items-center space-x-4">
               <Link
-                to="/test-employer-data"
-                className="text-blue-600 hover:text-blue-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Test Data
-              </Link>
-              <Link
                 to="/admin/employer-approvals"
                 className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
               >

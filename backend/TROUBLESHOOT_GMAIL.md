@@ -123,8 +123,8 @@ This will send 2 test emails to globalskills4@gmail.com
 
 **Look for emails from:**
 - Sender: "Global Skills Bridge" <globalskills4@gmail.com>
-- Subject: "✅ Your Employer Account Has Been Approved"
-- Subject: "❌ Your Employer Account Has Been Rejected"
+- Subject: " Your Employer Account Has Been Approved"
+- Subject: " Your Employer Account Has Been Rejected"
 
 **Check these folders:**
 1. Inbox

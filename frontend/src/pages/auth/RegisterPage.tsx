@@ -9,7 +9,7 @@ function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'job-seeker' as 'job-seeker' | 'employer' | 'mentor' | 'rtb-admin',
+    role: 'job-seeker' as 'job-seeker' | 'employer' | 'mentor',
     agreeTerms: false
   });
   const [error, setError] = useState('');
@@ -41,15 +41,19 @@ function RegisterPage() {
 
     setLoading(true);
 
-    const success = await register(formData);
-    
-    if (success) {
-      navigate('/dashboard');
-    } else {
-      setError('Registration failed. Please try again.');
+    try {
+      const result = await register(formData);
+      
+      if (result.success) {
+        navigate('/dashboard');
+      } else {
+        setError(result.message || 'Registration failed. Please try again.');
+      }
+    } catch {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const roleDescriptions = {

@@ -892,7 +892,7 @@ class EmailService {
 
     const statusConfig = {
       approved: {
-        subject: '🎉 Your Employer Account has been Approved - Global Skills Bridge',
+        subject: ' Your Employer Account has been Approved - Global Skills Bridge',
         greeting: 'Congratulations!',
         message: `We're excited to inform you that your employer account for ${employer.companyName} has been approved and is now active.`,
         action: 'You can now start posting jobs, searching for talent, and accessing all employer features.',
@@ -901,7 +901,7 @@ class EmailService {
         buttonUrl: dashboardUrl
       },
       rejected: {
-        subject: '❌ Employer Account Application Update - Global Skills Bridge',
+        subject: ' Employer Account Application Update - Global Skills Bridge',
         greeting: 'Account Application Update',
         message: `We regret to inform you that your employer account application for ${employer.companyName} has not been approved at this time.`,
         action: 'You can review our requirements and submit a new application if you meet the criteria.',
@@ -941,7 +941,7 @@ class EmailService {
       </head>
       <body>
         <div class="header">
-          <h1>🌍 Global Skills Bridge</h1>
+          <h1> Global Skills Bridge</h1>
           <p>Employer Account ${status.charAt(0).toUpperCase() + status.slice(1)}</p>
         </div>
         <div class="content">
@@ -972,7 +972,7 @@ class EmailService {
 
           ${isApproved ? `
           <div style="background: #d4edda; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #28a745;">
-            <h4>🚀 Getting Started:</h4>
+            <h4> Getting Started:</h4>
             <ul style="margin: 10px 0;">
               <li>Complete your company profile</li>
               <li>Post your first job opening</li>
@@ -1054,7 +1054,7 @@ class EmailService {
       </head>
       <body>
         <div class="header">
-          <h1>🔔 Admin Alert</h1>
+          <h1> Admin Alert</h1>
           <p>New Employer Registration Pending Review</p>
         </div>
         <div class="content">
@@ -1063,7 +1063,7 @@ class EmailService {
           <p>A new employer has registered and requires approval before they can access the platform.</p>
           
           <div class="urgent">
-            <h4>⚠️ Review Required</h4>
+            <h4> Review Required</h4>
             <p>This employer account is pending approval and waiting for administrative review.</p>
           </div>
 
@@ -1139,7 +1139,7 @@ class EmailService {
     `;
 
     return {
-      subject: '🔔 New Employer Registration Pending Review - Global Skills Bridge',
+      subject: ' New Employer Registration Pending Review - Global Skills Bridge',
       html,
       text
     };
@@ -1173,7 +1173,7 @@ class EmailService {
       </head>
       <body>
         <div class="header">
-          <h1>🌍 Welcome to Global Skills Bridge!</h1>
+          <h1> Welcome to Global Skills Bridge!</h1>
           <p>Your journey to global opportunities starts here</p>
         </div>
         <div class="content">
@@ -1181,7 +1181,7 @@ class EmailService {
           <p>Welcome to Global Skills Bridge - the platform connecting TVET graduates with verified global employment opportunities.</p>
           
           <div class="steps">
-            <h3>🚀 Get Started in 3 Easy Steps:</h3>
+            <h3> Get Started in 3 Easy Steps:</h3>
             <div class="step">
               <h4>1. Complete Your Profile</h4>
               <p>Add your skills, education, and experience to showcase your qualifications to employers worldwide.</p>
@@ -1203,7 +1203,7 @@ class EmailService {
           </div>
 
           <div style="background: #e8f5e8; padding: 15px; border-radius: 6px; margin: 20px 0;">
-            <h4>🎯 What You Can Do:</h4>
+            <h4> What You Can Do:</h4>
             <ul>
               <li>Access thousands of global job opportunities</li>
               <li>Get mentorship from industry experts</li>
@@ -1269,7 +1269,7 @@ class EmailService {
     `;
 
     return {
-      subject: '🌍 Welcome to Global Skills Bridge - Your Global Career Journey Starts Now!',
+      subject: ' Welcome to Global Skills Bridge - Your Global Career Journey Starts Now!',
       html,
       text
     };
@@ -1313,7 +1313,7 @@ class EmailService {
             <p><strong>Name:</strong> ${jobSeeker.name}</p>
             <p><strong>Position Applied:</strong> ${application.job?.title}</p>
             <p><strong>Application Date:</strong> ${new Date(application.createdAt).toLocaleDateString()}</p>
-            <p><strong>Skills Verified:</strong> ${jobSeeker.isVerified ? '✅ Yes' : '❌ Pending'}</p>
+            <p><strong>Skills Verified:</strong> ${jobSeeker.isVerified ? ' Yes' : ' Pending'}</p>
             <p><strong>Experience Level:</strong> ${jobSeeker.experienceLevel || 'Not specified'}</p>
           </div>
 
@@ -1394,7 +1394,7 @@ class EmailService {
       </head>
       <body>
         <div class="header">
-          <h1>🤝 New Mentorship Request</h1>
+          <h1> New Mentorship Request</h1>
           <p>Someone wants to learn from your expertise</p>
         </div>
         <div class="content">
@@ -1463,7 +1463,7 @@ class EmailService {
     `;
 
     return {
-      subject: '🤝 New Mentorship Request - Global Skills Bridge',
+      subject: ' New Mentorship Request - Global Skills Bridge',
       html,
       text
     };

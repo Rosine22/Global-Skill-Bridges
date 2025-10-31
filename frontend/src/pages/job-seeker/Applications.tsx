@@ -7,12 +7,11 @@ import {
   Search, 
   Calendar, 
   Building, 
-  Eye, 
-  MessageSquare,
   CheckCircle,
   Clock,
   XCircle,
-  AlertTriangle
+  AlertTriangle,
+  Eye
 } from 'lucide-react';
 
 function ApplicationsPage() {
@@ -47,9 +46,9 @@ function ApplicationsPage() {
       case 'pending':
         return <Clock className="h-4 w-4 text-yellow-500" />;
       case 'reviewed':
-        return <Eye className="h-4 w-4 text-blue-500" />;
+        return <Eye className="h-4 w-4 text-teal-500" />;
       case 'shortlisted':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-teal-500" />;
       case 'rejected':
         return <XCircle className="h-4 w-4 text-red-500" />;
       case 'hired':
@@ -104,10 +103,10 @@ function ApplicationsPage() {
     setSelectedApplication(null);
   };
 
-  const handleSendMessage = (applicationId: string, message: string) => {
-    console.log('Sending message:', applicationId, message);
-    // TODO: Implement message sending
-  };
+  // const handleSendMessage = (applicationId: string, message: string) => {
+  //   console.log('Sending message:', applicationId, message);
+  //   // TODO: Implement message sending
+  // };
 
   const stats = [
     {
@@ -123,7 +122,7 @@ function ApplicationsPage() {
     {
       title: 'Shortlisted',
       value: userApplications.filter(app => app.status === 'shortlisted').length,
-      color: 'text-green-600'
+      color: 'text-teal-500'
     },
     {
       title: user?.role === 'employer' ? 'Hired' : 'Success Rate',
@@ -139,7 +138,7 @@ function ApplicationsPage() {
       <div className="space-y-8">
         {/* Status Update Notification */}
         {statusUpdateNotification && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
+          <div className="bg-green-100 border border-teal-400 text-teal-700 px-4 py-3 rounded-lg">
             <p className="font-medium">{statusUpdateNotification}</p>
           </div>
         )}
@@ -280,13 +279,10 @@ function ApplicationsPage() {
                           onClick={() => handleViewApplication(application)}
                           className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
                         >
-                          <Eye className="h-4 w-4 mr-1" />
+                          {/* <Eye className="h-4 w-4 mr-1" /> */}
                           View Details
                         </button>
-                        <button className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center">
-                          <MessageSquare className="h-4 w-4 mr-1" />
-                          Message
-                        </button>
+              
                       </div>
                     </div>
                   </div>
@@ -314,7 +310,7 @@ function ApplicationsPage() {
             isOpen={showReviewModal}
             onClose={handleCloseReviewModal}
             onStatusUpdate={handleStatusUpdate}
-            onSendMessage={handleSendMessage}
+            // onSendMessage={handleSendMessage}
           />
         )}
       </div>

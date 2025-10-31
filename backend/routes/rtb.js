@@ -2,7 +2,7 @@ const express = require("express");
 const { RTBGraduate } = require("../models/Skill");
 const User = require("../models/User");
 const Application = require("../models/Application");
-const Job = require("../models/Job").default;
+const Job = require("../models/Job");
 const SkillVerification = require("../models/Skill");
 const { protect, authorize } = require("../middleware/auth");
 

@@ -1,4 +1,5 @@
-import { Schema, model } from "mongoose";
+const mongoose = require("mongoose");
+const { Schema, model } = mongoose;
 
 const jobSchema = new Schema(
   {
@@ -345,4 +346,4 @@ jobSchema.statics.findFeatured = function (limit = 10) {
     .limit(limit);
 };
 
-export default model("Job", jobSchema);
+module.exports = model("Job", jobSchema);

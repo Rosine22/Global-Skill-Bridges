@@ -64,6 +64,8 @@ function AdminDashboard() {
         if (jobsResponse.ok) {
           const jobsData = await jobsResponse.json();
           const jobsArray = jobsData.jobs || jobsData || [];
+          console.log('Jobs data received:', jobsArray); // Debug log
+          console.log('First job createdAt:', jobsArray[0]?.createdAt); // Debug log
           setJobs(jobsArray);
           
           const pendingJobs = jobsArray.filter((j: Job) => !j.isApproved).length;
@@ -267,11 +269,19 @@ function AdminDashboard() {
             <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Job Postings</h3>
             {jobs.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-500">No job postings yet.</p>
+                {/* <p className="text-gray-500">No job postings yet.</p> */}
               </div>
             ) : (
               <div className="space-y-3">
-                {jobs.slice(0, 5).map((job) => (
+                {jobs
+                  .slice()
+                  .sort((a, b) => {
+                    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                    return dateB - dateA;
+                  })
+                  .slice(0, 2)
+                  .map((job) => (
                   <div key={job._id} className={`flex items-center justify-between p-3 rounded-lg ${
                     job.isApproved ? 'bg-green-50' : 'bg-yellow-50'
                   }`}>
