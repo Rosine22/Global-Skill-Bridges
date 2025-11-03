@@ -1,6 +1,7 @@
 const errorHandler = (err, req, res, next) => {
   let error = { ...err };
   error.message = err.message;
+  console.log(err)
 
   // Log error for debugging
   console.error("Error:", err);

@@ -119,18 +119,16 @@ const checkOwnership = (resourceField = "user") => {
       });
     }
 
-    // Skip ownership check for admins
+    
     if (req.user.role === "admin" || req.user.role === "rtb-admin") {
       return next();
     }
 
-    // The actual ownership check will be done in the route handler
-    // since we need to fetch the resource first
+
     next();
   };
 };
 
-// Email verification required
 const requireEmailVerification = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({
@@ -151,7 +149,6 @@ const requireEmailVerification = (req, res, next) => {
   next();
 };
 
-// Profile completion check
 const requireProfileCompletion = (minimumCompletion = 50) => {
   return (req, res, next) => {
     if (!req.user) {
@@ -175,8 +172,6 @@ const requireProfileCompletion = (minimumCompletion = 50) => {
     next();
   };
 };
-
-// Rate limiting for sensitive operations
 const rateLimitByUser = (maxRequests = 5, windowMs = 15 * 60 * 1000) => {
   const requests = new Map();
 
@@ -220,6 +215,44 @@ const rateLimitByUser = (maxRequests = 5, windowMs = 15 * 60 * 1000) => {
   };
 };
 
+// Rate limiting by IP address (for public routes)
+const rateLimitByIP = (maxRequests = 5, windowMs = 15 * 60 * 1000) => {
+  const requests = new Map();
+
+  return (req, res, next) => {
+    // Get client IP address
+    const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    const windowStart = now - windowMs;
+
+    // Clean old entries
+    if (requests.has(clientIP)) {
+      const ipRequests = requests
+        .get(clientIP)
+        .filter((time) => time > windowStart);
+      requests.set(clientIP, ipRequests);
+    } else {
+      requests.set(clientIP, []);
+    }
+
+    const ipRequests = requests.get(clientIP);
+
+    if (ipRequests.length >= maxRequests) {
+      return res.status(429).json({
+        success: false,
+        message: "Too many requests from this IP. Please try again later.",
+        retryAfter: Math.ceil(windowMs / 1000),
+      });
+    }
+
+    // Add current request
+    ipRequests.push(now);
+    requests.set(clientIP, ipRequests);
+
+    next();
+  };
+};
+
 // Optional authentication (for public routes that can benefit from user context)
 const optionalAuth = async (req, res, next) => {
   try {
@@ -258,5 +291,6 @@ module.exports = {
   requireEmailVerification,
   requireProfileCompletion,
   rateLimitByUser,
+  rateLimitByIP,
   optionalAuth,
 };

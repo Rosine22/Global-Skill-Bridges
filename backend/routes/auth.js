@@ -1,5 +1,6 @@
-const express = require("express");
+const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const express = require("express");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { body, validationResult } = require("express-validator");
@@ -141,6 +142,7 @@ const loginValidation = [
 router.post("/register", registerValidation, async (req, res, next) => {
   try {
     // Check validation errors
+    console.log(req.body);
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -151,7 +153,7 @@ router.post("/register", registerValidation, async (req, res, next) => {
     }
 
     const { name, email, password, role, phone, companyInfo, avatar } = req.body;
-
+    console.log(req.body);
     // Check if user exists
     let user = await User.findOne({ email });
     if (user) {
@@ -418,274 +420,84 @@ router.put("/profile", protect, async (req, res, next) => {
       new: true,
       runValidators: true,
     });
-
-    // Recalculate profile completion
-    user.calculateProfileCompletion();
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Profile updated successfully",
-      data: user,
-    });
   } catch (error) {
     next(error);
   }
 });
-
-// @route   PUT /api/auth/change-password
-// @desc    Change user password
-// @access  Private
-router.put(
-  "/change-password",
-  protect,
-  rateLimitByUser(5, 15 * 60 * 1000), // 5 attempts per 15 minutes
-  [
-    body("currentPassword")
-      .notEmpty()
-      .withMessage("Current password is required"),
-    body("newPassword")
-      .isLength({ min: 6 })
-      .withMessage("New password must be at least 6 characters"),
-    body("confirmPassword").custom((value, { req }) => {
-      if (value !== req.body.newPassword) {
-        throw new Error("Password confirmation does not match");
-      }
-      return true;
-    }),
-  ],
-  async (req, res, next) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          message: "Validation errors",
-          errors: errors.array(),
-        });
-      }
-
-      const { currentPassword, newPassword } = req.body;
-
-      // Get user with password
-      const user = await User.findById(req.user.id).select("+password");
-
-      // Check current password
-      const isMatch = await user.matchPassword(currentPassword);
-      if (!isMatch) {
-        return res.status(400).json({
-          success: false,
-          message: "Current password is incorrect",
-        });
-      }
-
-      // Update password
-      user.password = newPassword;
-      await user.save();
-
-      res.status(200).json({
-        success: true,
-        message: "Password changed successfully",
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
 
 // @route   POST /api/auth/forgot-password
-// @desc    Send reset password email
+// @desc    Generate password reset token and send email
 // @access  Public
-router.post(
-  "/forgot-password",
-  rateLimitByUser(3, 15 * 60 * 1000),
-  [
-    body("email")
-      .isEmail()
-      .normalizeEmail()
-      .withMessage("Please provide a valid email"),
-  ],
-  async (req, res, next) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          message: "Please provide a valid email",
-          errors: errors.array(),
-        });
-      }
-
-      const user = await User.findOne({ email: req.body.email });
-
-      if (!user) {
-        // Don't reveal if email exists or not
-        return res.status(200).json({
-          success: true,
-          message:
-            "If an account with that email exists, a password reset link has been sent",
-        });
-      }
-
-      // Generate reset token
-      const resetToken = user.getResetPasswordToken();
-      await user.save({ validateBeforeSave: false });
-
-      try {
-        // Send password reset email
-        const emailResult = await emailService.sendPasswordResetEmail(
-          user.email,
-          resetToken,
-          user
-        );
-
-        if (emailResult.success) {
-          console.log(`Password reset email sent to ${user.email}: ${emailResult.messageId}`);
-        } else {
-          console.error(`Failed to send password reset email to ${user.email}:`, emailResult.error);
-        }
-      } catch (emailError) {
-        console.error('Error sending password reset email:', emailError);
-        // Don't fail the request if email fails - still return success for security
-      }
-
-      res.status(200).json({
-        success: true,
-        message: "If an account with that email exists, a password reset link has been sent",
-        resetToken:
-          process.env.NODE_ENV === "development" ? resetToken : undefined,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-// @route   PUT /api/auth/reset-password/:resettoken
-// @desc    Reset password
-// @access  Public
-router.put(
-  "/reset-password/:resettoken",
-  [
-    body("password")
-      .isLength({ min: 6 })
-      .withMessage("Password must be at least 6 characters"),
-    body("confirmPassword").custom((value, { req }) => {
-      if (value !== req.body.password) {
-        throw new Error("Password confirmation does not match");
-      }
-      return true;
-    }),
-  ],
-  async (req, res, next) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          message: "Validation errors",
-          errors: errors.array(),
-        });
-      }
-
-      // Get hashed token
-      const resetPasswordToken = crypto
-        .createHash("sha256")
-        .update(req.params.resettoken)
-        .digest("hex");
-
-      const user = await User.findOne({
-        resetPasswordToken,
-        resetPasswordExpire: { $gt: Date.now() },
-      });
-
-      if (!user) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid or expired reset token",
-        });
-      }
-
-      // Set new password
-      user.password = req.body.password;
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpire = undefined;
-      await user.save();
-
-      sendTokenResponse(user, 200, res, "Password reset successfully");
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-// @route   POST /api/auth/verify-email/:token
-// @desc    Verify email address
-// @access  Public
-router.post("/verify-email/:token", async (req, res, next) => {
+router.post('/forgot-password', async (req, res, next) => {
   try {
-    // In a real implementation, you'd verify the token and update the user
-    // For now, we'll just find by token and update
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Please provide an email address' });
+    }
+
+    const user = await User.findOne({ email });
+
+    // Always respond with 200 to avoid email enumeration
+    if (!user) {
+      return res.status(200).json({ success: true, message: 'If an account with that email exists, a password reset link has been sent.' });
+    }
+
+    // Generate reset token (unhashed) and save hashed token on user
+    const resetToken = user.getResetPasswordToken();
+    await user.save({ validateBeforeSave: false });
+
+    // Send reset email
+    const emailResult = await emailService.sendPasswordResetEmail(user.email, resetToken, user);
+
+    if (!emailResult.success) {
+      console.error('Failed to send password reset email:', emailResult.error);
+      return res.status(500).json({ success: false, message: 'Failed to send password reset email' });
+    }
+
+    return res.status(200).json({ success: true, message: 'If an account with that email exists, a password reset link has been sent.' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @route   POST /api/auth/reset-password/:token
+// @desc    Reset password using token
+// @access  Public
+router.put('/reset-password/:token', async (req, res, next) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ success: false, message: 'Please provide a new password' });
+    }
+
+    // Hash token to compare with stored hashed token
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
     const user = await User.findOne({
-      emailVerificationToken: req.params.token,
-    });
+      resetPasswordToken: hashedToken,
+      resetPasswordExpire: { $gt: Date.now() }
+    }).select('+password');
 
     if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid verification token",
-      });
+      return res.status(400).json({ success: false, message: 'Invalid or expired password reset token' });
     }
 
-    user.isEmailVerified = true;
-    user.emailVerificationToken = undefined;
-    user.calculateProfileCompletion();
+    // Set new password (pre-save middleware will hash)
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
     await user.save();
 
-    res.status(200).json({
-      success: true,
-      message: "Email verified successfully",
-    });
+    // Optionally log the user in by sending tokens
+    sendTokenResponse(user, 200, res, 'Password reset successful');
   } catch (error) {
     next(error);
   }
 });
 
-// @route   POST /api/auth/refresh-token
-// @desc    Refresh access token using refresh token
-// @access  Public
-router.post("/refresh-token", async (req, res, next) => {
-  try {
-    let refreshToken = req.body.refreshToken || req.cookies.refreshToken;
 
-    if (!refreshToken) {
-      return res.status(401).json({
-        success: false,
-        message: "Refresh token not provided",
-      });
-    }
-
-    try {
-      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-      const user = await User.findById(decoded.id);
-
-      if (!user || !user.isActive || user.isBlocked) {
-        return res.status(401).json({
-          success: false,
-          message: "Invalid refresh token",
-        });
-      }
-
-      sendTokenResponse(user, 200, res, "Token refreshed successfully");
-    } catch (error) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid refresh token",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-
+// Export model safely to prevent OverwriteModelError
 module.exports = router;

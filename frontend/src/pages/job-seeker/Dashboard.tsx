@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useUserContext } from '../../contexts/UserContext';
+import { useUserContext, JobApplicationData } from '../../contexts/UserContext';
 import DashboardLayout from '../../components/DashboardLayout';
 import JobCard from '../../components/JobCard';
+import JobApplicationForm from '../../components/JobApplicationForm';
 
 function JobSeekerDashboard() {
   const { user } = useAuth();
   const { jobs, applications, applyToJob } = useUserContext();
   const [loading] = useState(false);
   const [activeView, setActiveView] = useState<'jobs' | 'applications' | 'interviews' | null>('jobs');
+  const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   console.log('JobSeekerDashboard - Jobs from context:', jobs);
   console.log('JobSeekerDashboard - Jobs count:', jobs.length);
@@ -32,30 +36,26 @@ function JobSeekerDashboard() {
       return;
     }
 
-    // Simple application - in real app, this would open a modal with application form
-    const applicationData = {
-      coverLetter: `I am interested in applying for this position. I believe my skills and experience make me a great fit for this role.`,
-      resume: null,
-      portfolio: { url: '', description: '' },
-      additionalDocuments: [],
-      personalInfo: {
-        phone: '',
-        linkedIn: '',
-        website: '',
-        availableStartDate: new Date().toISOString().split('T')[0]
-      },
-      salaryExpectation: {
-        min: '',
-        max: '',
-        currency: 'USD',
-        isNegotiable: true
-      },
-      whyInterested: 'I am excited about this opportunity and believe I can contribute significantly to the team.',
-      additionalNotes: ''
-    };
+    // Open comprehensive application form instead of quick apply
+    setSelectedJobId(jobId);
+    setShowApplicationForm(true);
+  };
 
-    applyToJob(jobId, applicationData);
-    alert('Application submitted successfully!');
+  const handleApplicationSubmit = (applicationData: JobApplicationData) => {
+    if (!selectedJobId) return;
+    
+    setIsSubmitting(true);
+    try {
+      applyToJob(selectedJobId, applicationData);
+      setShowApplicationForm(false);
+      setSelectedJobId(null);
+      alert('Application submitted successfully!');
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      alert('Failed to submit application. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -263,6 +263,19 @@ function JobSeekerDashboard() {
           </div>
         )}
       </div>
+
+      {/* Comprehensive Application Form Modal */}
+      {showApplicationForm && selectedJobId && (
+        <JobApplicationForm
+          job={jobs.find(j => j.id === selectedJobId)!}
+          onSubmit={handleApplicationSubmit}
+          onCancel={() => {
+            setShowApplicationForm(false);
+            setSelectedJobId(null);
+          }}
+          isSubmitting={isSubmitting}
+        />
+      )}
     </DashboardLayout>
   );
 }

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getApiUrl, getAuthHeaders, API_ENDPOINTS } from '../../config/api';
 import DashboardLayout from '../../components/DashboardLayout';
 import {
   Bell,
@@ -24,53 +25,31 @@ interface Notification {
 function NotificationsPage() {
   const [filter, setFilter] = useState<'all' | 'unread' | 'job' | 'mentorship'>('all');
   
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'application',
-      title: 'Application Update',
-      message: 'Your application for Software Developer at TechCorp has been reviewed.',
-      timestamp: '2024-01-20 10:30',
-      read: false,
-      actionUrl: '/applications'
-    },
-    {
-      id: '2',
-      type: 'mentorship',
-      title: 'Mentorship Request Accepted',
-      message: 'Sarah Uwimana has accepted your mentorship request.',
-      timestamp: '2024-01-19 14:15',
-      read: false,
-      actionUrl: '/mentorship'
-    },
-    {
-      id: '3',
-      type: 'verification',
-      title: 'Skill Verification Complete',
-      message: 'Your JavaScript Programming skill has been verified.',
-      timestamp: '2024-01-18 16:45',
-      read: true,
-      actionUrl: '/skills-verification'
-    },
-    {
-      id: '4',
-      type: 'job',
-      title: 'New Job Match',
-      message: 'A new job matching your skills has been posted: React Developer in Canada.',
-      timestamp: '2024-01-17 09:20',
-      read: true,
-      actionUrl: '/dashboard'
-    },
-    {
-      id: '5',
-      type: 'message',
-      title: 'New Message',
-      message: 'You have a new message from TechCorp HR.',
-      timestamp: '2024-01-16 11:30',
-      read: false,
-      actionUrl: '/messages'
-    }
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(getApiUrl(API_ENDPOINTS.NOTIFICATIONS), {
+          method: 'GET',
+          headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to fetch notifications');
+        const data = await response.json();
+        // Expecting data.notifications or data.data
+        setNotifications(data.notifications || data.data || []);
+      } catch (err: any) {
+        setError(err.message || 'Error fetching notifications');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNotifications();
+  }, []);
 
   const filteredNotifications = notifications.filter(notification => {
     switch (filter) {
@@ -165,7 +144,17 @@ function NotificationsPage() {
 
           {/* Notifications List */}
           <div className="divide-y divide-gray-200">
-            {filteredNotifications.length > 0 ? (
+            {loading ? (
+              <div className="p-8 text-center">
+                <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-bounce" />
+                <p className="text-gray-500">Loading notifications...</p>
+              </div>
+            ) : error ? (
+              <div className="p-8 text-center">
+                <Bell className="h-12 w-12 text-red-400 mx-auto mb-4" />
+                <p className="text-red-500">{error}</p>
+              </div>
+            ) : filteredNotifications.length > 0 ? (
               filteredNotifications.map((notification) => (
                 <div
                   key={notification.id}

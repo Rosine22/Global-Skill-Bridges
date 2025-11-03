@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const multer = require('multer');
+const path = require('path');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
@@ -28,6 +30,27 @@ const notFound = require('./middleware/notFound');
 
 const app = express();
 
+// Configure storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Directory where files will be saved
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`); // Unique file name
+  }
+});
+
+// Initialize Multer
+const upload = multer({ storage: storage });
+
+// Route to handle file upload
+app.post('/upload', upload.single('file'), (req, res) => {
+  res.send(`File uploaded successfully: ${req.file.filename}`);
+});
+
+app.use('/uploads', express.static('uploads'));
+
+
 // Trust proxy (important for rate limiting behind proxies)
 app.set('trust proxy', 1);
 
@@ -44,18 +67,18 @@ const connectDB = async () => {
       useUnifiedTopology: true,
     });
 
-    console.log(`✅ MongoDB Atlas Connected Successfully!`);
-    console.log(`📍 Database Host: ${conn.connection.host}`);
-    console.log(`🏷️  Database Name: ${conn.connection.name}`);
-    console.log(`⚡ Connection State: ${mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'}`);
+    console.log(` MongoDB Atlas Connected Successfully!`);
+    console.log(` Database Host: ${conn.connection.host}`);
+    console.log(` Database Name: ${conn.connection.name}`);
+    console.log(` Connection State: ${mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'}`);
     
     // Handle connection events
     mongoose.connection.on('error', (err) => {
-      console.error('❌ MongoDB connection error:', err);
+      console.error(' MongoDB connection error:', err);
     });
 
     mongoose.connection.on('disconnected', () => {
-      console.log('🔌 MongoDB disconnected');
+      console.log(' MongoDB disconnected');
     });
 
     mongoose.connection.on('reconnected', () => {
@@ -63,8 +86,8 @@ const connectDB = async () => {
     });
 
   } catch (error) {
-    console.error('💥 Database connection failed:', error.message);
-    console.log('🔍 Connection troubleshooting tips:');
+    console.error(' Database connection failed:', error.message);
+    console.log(' Connection troubleshooting tips:');
     console.log('   1. Check if your IP address is whitelisted in MongoDB Atlas');
     console.log('   2. Verify your database password is correct');
     console.log('   3. Ensure network connectivity to MongoDB Atlas');
@@ -220,7 +243,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/rtb', rtbRoutes);
 app.use('/api/analytics', analyticsRoutes);
-
+app.post("/api/uploads", )
 // Swagger API Documentation
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
@@ -243,7 +266,7 @@ app.get('/api/docs.json', (req, res) => {
 });
 
 // Error Handling Middleware (must be after routes)
-app.use(notFound);
+app.use("*", notFound);
 app.use(errorHandler);
 
 // Graceful Shutdown

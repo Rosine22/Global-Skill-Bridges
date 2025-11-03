@@ -1,6 +1,7 @@
 const express = require('express');
 const User = require('../models/User');
 const Application = require('../models/Application');
+const EmailService = require('../services/emailService');
 
 const router = express.Router();
 
@@ -123,6 +124,16 @@ router.put("/employers/:id/approve", async (req, res) => {
     }
 
     await employer.save();
+
+    // Send email notification to employer about approval status change
+    try {
+      const emailService = new EmailService();
+      // Use the email service method that accepts boolean isApproved and optional notes
+      await emailService.sendEmployerApprovalEmail(employer.toObject ? employer.toObject() : employer, employer.isApproved, notes || '');
+    } catch (emailErr) {
+      console.error('Failed to send employer approval email:', emailErr);
+      // Continue without failing the API response
+    }
 
     res.status(200).json({
       success: true,

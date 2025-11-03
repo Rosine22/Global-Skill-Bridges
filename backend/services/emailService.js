@@ -4,28 +4,32 @@ require('dotenv').config();
 
 class EmailService {
   constructor() {
-    // Configure email transporter
-    // Use the existing .env variables
-    this.transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-      }
-    });
+    // Configure email transporter based on environment variables
+    // Prefer SMTP_HOST/SMTP_PORT if provided; otherwise fallback to Gmail service
+    const host = process.env.SMTP_HOST || process.env.EMAIL_HOST;
+    const port = parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT || '0', 10);
+    const user = process.env.SMTP_USER || process.env.EMAIL_USER;
+    const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
 
-    // For production, use a real email service:
-    /*
-    this.transporter = nodemailer.createTransporter({
-      service: 'gmail', // or 'sendgrid', 'mailgun', etc.
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-    */
+    if (host && user && pass) {
+      this.transporter = nodemailer.createTransport({
+        host,
+        port: port || 587,
+        secure: false,
+        auth: { user, pass },
+      });
+    } else {
+      // Fallback to Gmail service if specific host not configured
+      this.transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: user || process.env.GMAIL_USER || process.env.SMTP_USER,
+          pass: pass || process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS,
+        },
+      });
+    }
 
-    this.baseUrl = process.env.FRONTEND_URL || 'http://localhost:5174';
+    this.baseUrl = process.env.FRONTEND_URL || process.env.CLIENT_BASE_URL || 'http://localhost:5174';
   }
 
   /**
