@@ -6,7 +6,7 @@
  
  **GitHub Repository:** [https://github.com/Rosine22/Global-Skill-Bridges]  
  **Figma design:** [https://www.figma.com/design/SXmOiQP0Vn2YJKQ5gqhW6v/Global-Skills_Bridge?node-id=15-2&p=f&t=ZM92dghfNyBYXCGf-0]    
- **Deployment Plan:** [Netlify Deployment Plan — https://global-skills-br.netlify.app/]
+ **Deployed link:** [https://global-skill-bridges-git-2fd38f-uwinezarosine16-2552s-projects.vercel.app/]
  
 
 ---
@@ -52,7 +52,7 @@
 
 ---
 
-## 🛠️ Technology Stack
+##  Technology Stack
 
 ### Frontend
 | Category | Technology |
@@ -87,11 +87,11 @@
 
 ---
 
-## ⚙️ Complete Setup Instructions
+##  Complete Setup Instructions
 
 Follow these comprehensive steps to set up **Global Skills Bridge** locally.
 
-### 📋 Prerequisites
+###  Installments:
 
 Before you begin, ensure you have the following installed on your system:
 
@@ -107,7 +107,7 @@ git clone https://github.com/Rosine22/Global-Skill-Bridges.git
 cd Global-Skills-Bridge-main
 ```
 
-### 2. 🗄️ Database Setup (MongoDB Atlas)
+### 2.  Database Setup (MongoDB Atlas)
 
 1. **Create a MongoDB Atlas Account:**
    - Go to [MongoDB Atlas](https://www.mongodb.com/atlas)
@@ -123,7 +123,7 @@ cd Global-Skills-Bridge-main
    - Create a database user with read/write privileges
    - Note down the username and password
 
-### 3. 🔧 Backend Setup
+### 3.  Backend Setup
 
 ```bash
 # Navigate to backend directory
@@ -144,8 +144,7 @@ NODE_ENV=development
 PORT=5000
 
 # Database Configuration - MongoDB Atlas
-MONGODB_URI=mongodb+srv://your-username:your-password@cluster0.xxxxx.mongodb.net/global-skills-bridge?retryWrites=true&w=majority
-
+MONGODB_URI=  MONGODB_URI='mongodb+srv://rosine:rosine22@cluster0.o0f0hb5.mongodb.net/global-skills-bridge?retryWrites=true&w=majority'
 # JWT Configuration
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-this-in-production
@@ -204,7 +203,7 @@ npm run dev
 
 The frontend application will run on `http://localhost:5173/`
 
-### 5. 🔗 Environment Variables (Frontend)
+### 5.  Environment Variables (Frontend)
 
 Create a `.env` file in the frontend directory if needed:
 
@@ -228,7 +227,7 @@ VITE_API_URL=http://localhost:5000/api
    - You should see the Global Skills Bridge landing page
    - Try registering a new account to test the full flow
 
-### 7. 🚀 Production Build
+### 7.  Production Build
 
 **Backend Production:**
 ```bash
@@ -363,7 +362,7 @@ The API includes comprehensive endpoints for:
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
