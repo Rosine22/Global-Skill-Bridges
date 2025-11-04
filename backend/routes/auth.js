@@ -215,6 +215,27 @@ router.post("/register", registerValidation, async (req, res, next) => {
       // Don't fail registration if email fails
     }
 
+    // If this is an employer registration, notify admins to review the application
+    try {
+      if (user.role === 'employer') {
+        // Notify admin(s) about the new employer registration
+        const adminNotifyResult = await emailService.sendNewEmployerNotificationToAdmin(user);
+        if (!adminNotifyResult.success) {
+          console.error('Failed to notify admin about new employer:', adminNotifyResult.error);
+        }
+
+        // Also send the employer a 'pending' notification so they know their account is under review
+        try {
+          await emailService.sendEmployerApprovalEmail(user, false, 'Your application is under review.');
+        } catch (err) {
+          console.error('Failed to send employer pending notification:', err);
+        }
+      }
+    } catch (notifyErr) {
+      console.error('Error during employer/admin notification:', notifyErr);
+      // Do not fail registration if notification fails
+    }
+
     sendTokenResponse(user, 201, res, "User registered successfully");
   } catch (error) {
     next(error);

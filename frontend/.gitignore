@@ -21,3 +21,12 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Frontend docs / guides to ignore
+*GUIDE*.md
+*_GUIDE.md
+*SETUP*.md
+BUTTON_*.md
+DESIGN_SYSTEM_README.md
+STYLE_GUIDE.md
+UNIFORM_COLOR_SYSTEM.md

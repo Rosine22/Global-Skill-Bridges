@@ -38,3 +38,22 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 *.sln
+
+# Documentation / guides that shouldn't be pushed
+# Ignore project guides and local docs (but keep main README.md)
+# Patterns below will ignore common guide filenames while preserving README.md
+*GUIDE*.md
+*_GUIDE.md
+*SETUP*.md
+TROUBLESHOOT*.md
+EMAIL_*.md
+GMAIL_*.md
+FORGOT_PASSWORD*.md
+AUTH_CONTEXT_GUIDE.md
+BUTTON_*.md
+*_SUMMARY.md
+DESIGN_SYSTEM_README.md
+STYLE_GUIDE.md
+UNIFORM_COLOR_SYSTEM.md
+CONSISTENCY_COMPLETE.md
+COLOR_MIGRATION.md
