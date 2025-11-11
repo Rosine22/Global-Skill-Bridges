@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNotification } from '../../contexts/NotificationContext';
+import ConfirmDialog from '../../components/ConfirmDialog';
+import PromptDialog from '../../components/PromptDialog';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getApiUrl, getAuthHeaders, API_ENDPOINTS } from '../../config/api';
@@ -17,7 +20,7 @@ import {
 
 type BackendEmployer = {
   _id: string;
-  name: string; // contact person
+  name: string; 
   email: string;
   phone?: string;
   role: string;
@@ -57,24 +60,26 @@ function AdminEmployerApproval() {
   const [selectedEmployer, setSelectedEmployer] = useState<BackendEmployer | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const notify = useNotification();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [confirmAction, setConfirmAction] = useState<() => void>(() => {});
+  const [promptOpen, setPromptOpen] = useState(false);
+  const [pendingRejectId, setPendingRejectId] = useState<string | null>(null);
 
 
-  // Check if user is admin
   useEffect(() => {
     if (!user) {
-      // Not logged in, redirect to login
       navigate('/login');
       return;
     }
     
     if (user.role !== 'admin' && user.role !== 'rtb-admin') {
-      // Not an admin, redirect to admin login
       navigate('/admin/login');
       return;
     }
   }, [user, navigate]);
 
-  // Fetch employers from backend
   const fetchEmployers = async () => {
     try {
       setLoading(true);
@@ -82,13 +87,11 @@ function AdminEmployerApproval() {
 
       const headers = getAuthHeaders();
 
-      // Pending
       const pendingRes = await fetch(getApiUrl(`${API_ENDPOINTS.ADMIN}/employers/pending`), { headers });
       if (!pendingRes.ok) throw new Error('Failed to load pending employers');
       const pendingJson = await pendingRes.json();
       setPendingEmployers(pendingJson.data || []);
 
-      // Approved
       const approvedRes = await fetch(getApiUrl(`${API_ENDPOINTS.ADMIN}/employers?isApproved=true`), { headers });
       if (!approvedRes.ok) throw new Error('Failed to load approved employers');
       const approvedJson = await approvedRes.json();
@@ -108,7 +111,6 @@ function AdminEmployerApproval() {
     }
   }, [user]);
 
-  // Show loading while checking authentication
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -120,7 +122,6 @@ function AdminEmployerApproval() {
     );
   }
 
-  // Show unauthorized message if not admin
   if (user.role !== 'admin' && user.role !== 'rtb-admin') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -141,7 +142,6 @@ function AdminEmployerApproval() {
     );
   }
 
-  // Filter employers based on search term and status
   const listForTab = activeTab === 'pending' ? pendingEmployers : approvedEmployers;
   const term = searchTerm.toLowerCase();
   const currentEmployers = listForTab.filter((e) => {
@@ -170,20 +170,25 @@ function AdminEmployerApproval() {
       setShowModal(false);
     } catch (e) {
       console.error(e);
-      alert('Failed to approve employer.');
+      notify.error('Failed to approve employer.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleReject = async (employerId: string) => {
+  const handleReject = (employerId: string) => {
+    setPendingRejectId(employerId);
+    setPromptOpen(true);
+  };
+
+  const submitReject = async (notes: string) => {
+    if (!pendingRejectId) return;
     try {
-      const notes = prompt('Please provide a reason for rejection (optional):') || '';
       setLoading(true);
       const headers = {
         ...getAuthHeaders(),
       };
-      const res = await fetch(getApiUrl(`${API_ENDPOINTS.ADMIN}/employers/${employerId}/approve`), {
+      const res = await fetch(getApiUrl(`${API_ENDPOINTS.ADMIN}/employers/${pendingRejectId}/approve`), {
         method: 'PUT',
         headers,
         body: JSON.stringify({ approve: false, notes })
@@ -191,11 +196,14 @@ function AdminEmployerApproval() {
       if (!res.ok) throw new Error('Failed to reject employer');
       await fetchEmployers();
       setShowModal(false);
+      notify.success('Employer rejected successfully');
     } catch (e) {
       console.error(e);
-      alert('Failed to reject employer.');
+      notify.error('Failed to reject employer.');
     } finally {
       setLoading(false);
+      setPendingRejectId(null);
+      setPromptOpen(false);
     }
   };
 
@@ -248,7 +256,11 @@ function AdminEmployerApproval() {
                 Back to Home
               </button>
               <button
-                onClick={() => { if (window.confirm('Are you sure you want to logout?')) { logout(); navigate('/admin/login'); } }}
+                onClick={() => {
+                  setConfirmMessage('Are you sure you want to logout?');
+                  setConfirmAction(() => () => { logout(); navigate('/admin/login'); });
+                  setConfirmOpen(true);
+                }}
                 className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm font-medium"
               >
                 Logout
@@ -299,7 +311,6 @@ function AdminEmployerApproval() {
                   </span>
                 </div>
               </button>
-              {/* Rejected employers are not yet tracked separately in backend */}
             </nav>
           </div>
         </div>
@@ -560,6 +571,29 @@ function AdminEmployerApproval() {
           </div>
         </div>
       )}
+
+      {/* Confirm and Prompt dialogs */}
+      <ConfirmDialog
+        open={confirmOpen}
+        message={confirmMessage}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          try {
+            confirmAction();
+          } catch (e) {
+            console.error(e);
+          }
+        }}
+      />
+
+      <PromptDialog
+        open={promptOpen}
+        title="Reason for rejection (optional)"
+        defaultValue={''}
+        onCancel={() => { setPromptOpen(false); setPendingRejectId(null); }}
+        onSubmit={(value) => submitReject(value)}
+      />
     </div>
   );
 }

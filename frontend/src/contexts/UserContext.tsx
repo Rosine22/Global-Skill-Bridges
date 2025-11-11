@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth, User } from './AuthContext';
 
 export interface Mentor {
@@ -28,8 +28,8 @@ export interface JobScreeningQuestion {
   question: string;
   type: 'text' | 'multiple-choice' | 'yes-no' | 'numeric';
   required: boolean;
-  options?: string[]; // For multiple-choice questions
-  placeholder?: string; // For text/numeric questions
+  options?: string[]; 
+  placeholder?: string; 
 }
 
 export interface Job {
@@ -111,7 +111,6 @@ export interface Application {
   status: 'pending' | 'reviewed' | 'shortlisted' | 'interview-scheduled' | 'rejected' | 'hired';
   coverLetter: string;
   
-  // Enhanced application data
   resume?: {
     fileName: string;
     fileSize: number;
@@ -142,7 +141,6 @@ export interface Application {
   whyInterested?: string;
   additionalNotes?: string;
   
-  // Job-specific screening questions (to be added)
   screeningAnswers?: Array<{
     questionId: string;
     question: string;
@@ -202,7 +200,7 @@ export interface Session {
   description?: string;
   date: string;
   time: string;
-  duration: number; // in minutes
+  duration: number; 
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'declined';
   meetingLink?: string;
   notes?: string;
@@ -220,7 +218,7 @@ export interface EmployerProfile {
   companySize: string;
   location: string;
   website?: string;
-  companyLogo?: string; // URL or base64 data of company logo
+  companyLogo?: string; 
   submittedAt: string;
   createdAt: string;
   updatedAt?: string;
@@ -290,9 +288,8 @@ export function useUserContext() {
 }
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth(); // Get current authenticated user
+  const { user } = useAuth(); 
   const [jobs, setJobs] = useState<Job[]>(() => {
-    // Try to load jobs from localStorage first
     try {
       const saved = localStorage.getItem('globalSkillsBridge_jobs');
       if (saved) {
@@ -306,7 +303,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return [];
   });
   const [applications, setApplications] = useState<Application[]>(() => {
-    // Try to load applications from localStorage first
     try {
       const saved = localStorage.getItem('globalSkillsBridge_applications');
       if (saved) {
@@ -326,7 +322,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [employerProfiles, setEmployerProfiles] = useState<EmployerProfile[]>(() => {
-    // Try to load from localStorage first
     try {
       const saved = localStorage.getItem('employerProfiles');
       if (saved) {
@@ -341,7 +336,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
-    // Initialize with mock data
     const mockJobs: Job[] = [
       {
         id: '1',
@@ -659,10 +653,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     ];
 
     const mockSessions: Session[] = [
-      // Upcoming sessions
       {
         id: 'session-1',
-        mentorId: '1', // Match with current user
+        mentorId: '1', 
         mentorName: 'Current Mentor',
         jobSeekerId: 'user-1',
         jobSeekerName: 'Jane Smith',
@@ -692,7 +685,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         createdAt: new Date(Date.now() - 7200000).toISOString(),
         updatedAt: new Date(Date.now() - 7200000).toISOString()
       },
-      // Past sessions
       {
         id: 'session-3',
         mentorId: '1',
@@ -807,11 +799,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       }
     ];
 
-    // Only initialize with mock data if localStorage is empty
+    
     setJobs(prev => {
       if (prev.length === 0) {
         console.log('Initializing with mock jobs:', mockJobs.length);
-        // Save mock data to localStorage
         try {
           localStorage.setItem('globalSkillsBridge_jobs', JSON.stringify(mockJobs));
         } catch (error) {
@@ -827,7 +818,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setApplications(prev => {
       if (prev.length === 0) {
         console.log('Initializing with mock applications:', mockApplications.length);
-        // Save mock data to localStorage
+       
         try {
           localStorage.setItem('globalSkillsBridge_applications', JSON.stringify(mockApplications));
         } catch (error) {
@@ -853,24 +844,24 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         email: 'jane.smith@email.com',
         name: 'Jane Smith',
         role: 'job-seeker',
-        isVerified: true,
-        profileComplete: true
+        isEmailVerified: true,
+        profileCompletion: 100
       },
       {
         id: 'user-2',
         email: 'ahmed.hassan@email.com',
         name: 'Ahmed Hassan',
         role: 'job-seeker',
-        isVerified: true,
-        profileComplete: true
+        isEmailVerified: true,
+        profileCompletion: 100
       },
       {
         id: 'user-3',
         email: 'maria.gonzalez@email.com',
         name: 'Maria Gonzalez',
         role: 'job-seeker',
-        isVerified: true,
-        profileComplete: true
+        isEmailVerified: true,
+        profileCompletion: 100
       }
     ];
 
@@ -933,7 +924,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       },
       {
         id: 'emp-3',
-        userId: '2', // This is an already approved employer
+        userId: '2',
         companyName: 'Tech Solutions Ltd',
         email: 'employer@company.com',
         phone: '+1 (555) 987-6543',
@@ -962,11 +953,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     setUsers(mockUsers);
     
-    // Only initialize with mock data if localStorage is empty
     setEmployerProfiles(prev => {
       if (prev.length === 0) {
         console.log('Initializing with mock employer profiles:', mockEmployerProfiles.length);
-        // Save mock data to localStorage
         try {
           localStorage.setItem('employerProfiles', JSON.stringify(mockEmployerProfiles));
         } catch (error) {
@@ -983,7 +972,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     console.log('Jobs:', mockJobs.length);
   }, []);
 
-  // Save jobs to localStorage whenever jobs change
   useEffect(() => {
     if (jobs.length > 0) {
       try {
@@ -995,7 +983,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   }, [jobs]);
 
-  // Save applications to localStorage whenever applications change
   useEffect(() => {
     if (applications.length > 0) {
       try {
@@ -1029,7 +1016,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const job = jobs.find(j => j.id === jobId);
     if (!job) return;
 
-    // Simulate file processing (in real app, these would be uploaded to server)
     const processedDocuments = applicationData.additionalDocuments
       .filter(doc => doc.file)
       .map(doc => ({
@@ -1044,14 +1030,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       jobId,
       jobTitle: job.title,
       company: job.company,
-      applicantId: user?.id || '1', // Current user ID
+      applicantId: user?.id || '1', 
       applicantName: user?.name || 'Current User',
       applicantEmail: user?.email || 'current.user@email.com',
       appliedDate: new Date().toISOString().split('T')[0],
       status: 'pending',
       coverLetter: applicationData.coverLetter,
       
-      // Enhanced application data
       resume: applicationData.resume ? {
         fileName: applicationData.resume.name,
         fileSize: applicationData.resume.size,
@@ -1094,7 +1079,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     console.log('Comprehensive application submitted:', newApplication);
   };
 
-  // Legacy quick apply function for backward compatibility
   const applyToJobQuick = (jobId: string, coverLetter: string) => {
     const job = jobs.find(j => j.id === jobId);
     if (!job) return;
@@ -1124,8 +1108,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const newRequest: MentorshipRequest = {
       id: Date.now().toString(),
       mentorId,
-      mentorName: 'Mentor Name', // Would be fetched from mentor data
-      seekerId: '1', // Current user ID
+      mentorName: 'Mentor Name', 
+      seekerId: '1', 
       seekerName: 'Current User',
       field,
       message,
@@ -1149,7 +1133,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
 
   const createOrGetConversation = (otherUserId: string, otherUserName: string, otherUserRole: string): string => {
-    // Check if conversation already exists
     const existingConv = conversations.find(conv => 
       conv.participants.some(p => p.id === otherUserId)
     );
@@ -1158,11 +1141,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       return existingConv.id;
     }
 
-    // Create new conversation
     const newConversation: Conversation = {
       id: `conv-${Date.now()}`,
       participants: [
-        { id: 'user-1', name: 'Current User', role: 'job-seeker' }, // Would get from auth context
+        { id: 'user-1', name: 'Current User', role: 'job-seeker' }, 
         { id: otherUserId, name: otherUserName, role: otherUserRole }
       ],
       unreadCount: 0,
@@ -1180,9 +1162,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const newMessage: Message = {
       id: `msg-${Date.now()}`,
       conversationId,
-      senderId: 'user-1', // Would get from auth context
-      senderName: 'Current User', // Would get from auth context
-      senderRole: 'job-seeker', // Would get from auth context
+      senderId: 'user-1', 
+      senderName: 'Current User', 
+      senderRole: 'job-seeker', 
       receiverId,
       receiverName,
       receiverRole,
@@ -1194,7 +1176,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     setMessages(prev => [...prev, newMessage]);
     
-    // Update conversation's last message and timestamp
     setConversations(prev => prev.map(conv => 
       conv.id === conversationId 
         ? { 
@@ -1211,7 +1192,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       msg.id === messageId ? { ...msg, read: true } : msg
     ));
 
-    // Update unread count for conversation
     const message = messages.find(m => m.id === messageId);
     if (message) {
       setConversations(prev => prev.map(conv => 
@@ -1236,7 +1216,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     mentorName: string, 
     sessionData: { topic: string; description?: string; date: string; time: string; duration: number }
   ) => {
-    // Get current user from auth context
     if (!user) {
       console.error('No authenticated user found');
       return;
@@ -1253,7 +1232,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       date: sessionData.date,
       time: sessionData.time,
       duration: sessionData.duration,
-      status: 'confirmed', // Auto-confirm sessions for better UX
+      status: 'confirmed', 
       meetingLink: `https://meet.google.com/session-${Date.now()}`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -1288,10 +1267,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
 
   const canBookSessionWithMentor = (mentorId: string): boolean => {
-    // Check if there's an accepted mentorship request between current user and the mentor
     return mentorshipRequests.some(request => 
       request.mentorId === mentorId && 
-      request.seekerId === 'user-1' && // Would get from auth context
+      request.seekerId === 'user-1' && 
       request.status === 'accepted'
     );
   };
@@ -1299,7 +1277,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const submitEmployerProfile = async (profileData: Omit<EmployerProfile, 'id' | 'userId' | 'submittedAt' | 'status' | 'createdAt' | 'updatedAt'>) => {
     const currentTime = new Date().toISOString();
     
-    // Use logged-in user ID if available, otherwise create a temporary user ID
     const userId = user?.id || `temp-user-${Date.now()}`;
     
     if (!user) {
@@ -1322,7 +1299,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     console.log('Logo preview (first 100 chars):', profileData.companyLogo?.substring(0, 100));
     console.log('Current user:', user);
     
-    // Save to backend if user is authenticated
     if (user) {
       try {
         const token = localStorage.getItem('token');
@@ -1363,7 +1339,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         console.log('Profile saved to backend:', result);
       } catch (error) {
         console.error('Error saving profile to backend:', error);
-        // Continue with localStorage save even if backend fails
+        
       }
     }
     
@@ -1371,7 +1347,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       const updatedProfiles = [...prev, newProfile];
       console.log('Updated profiles after submission:', updatedProfiles);
       
-      // Persist to localStorage
       try {
         localStorage.setItem('employerProfiles', JSON.stringify(updatedProfiles));
         console.log('Profiles saved to localStorage');
@@ -1386,7 +1361,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateEmployerApprovalStatus = (profileId: string, status: 'approved' | 'rejected', reason?: string) => {
-    // Allow for demo purposes - in production, you'd want proper admin authentication
     const adminId = user?.id || 'demo-admin';
     
     if (!user) {
@@ -1415,7 +1389,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           : profile
       );
       
-      // Persist to localStorage
       try {
         localStorage.setItem('employerProfiles', JSON.stringify(updatedProfiles));
         console.log('Employer profile status updated and saved to localStorage');

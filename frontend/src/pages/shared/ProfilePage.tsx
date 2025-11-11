@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import PromptDialog from '../../components/PromptDialog';
+import { useNotification } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import DashboardLayout from '../../components/DashboardLayout';
 import { Mail, Phone, MapPin, Award, CreditCard as Edit3, Save, X, Plus } from 'lucide-react';
@@ -6,6 +8,8 @@ import { Mail, Phone, MapPin, Award, CreditCard as Edit3, Save, X, Plus } from '
 function ProfilePage() {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [promptOpen, setPromptOpen] = useState(false);
+  const notify = useNotification();
   const [profile, setProfile] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -53,13 +57,23 @@ function ProfilePage() {
   };
 
   const addSkill = () => {
-    const newSkill = prompt('Enter a skill:');
-    if (newSkill && !profile.skills.includes(newSkill)) {
-      setProfile(prev => ({
-        ...prev,
-        skills: [...prev.skills, newSkill]
-      }));
+    setPromptOpen(true);
+  };
+
+  const submitSkill = (value: string) => {
+    const newSkill = value?.trim();
+    if (!newSkill) {
+      notify.info('No skill entered');
+      setPromptOpen(false);
+      return;
     }
+    if (!profile.skills.includes(newSkill)) {
+      setProfile(prev => ({ ...prev, skills: [...prev.skills, newSkill] }));
+      notify.success('Skill added');
+    } else {
+      notify.info('Skill already added');
+    }
+    setPromptOpen(false);
   };
 
   const removeSkill = (skill: string) => {
@@ -271,6 +285,7 @@ function ProfilePage() {
           </div>
         </div>
       </div>
+      <PromptDialog open={promptOpen} title="Enter a skill" onSubmit={submitSkill} onCancel={() => setPromptOpen(false)} />
     </DashboardLayout>
   );
 }

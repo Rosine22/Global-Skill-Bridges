@@ -3,7 +3,14 @@ const User = require('../models/User');
 const Application = require('../models/Application');
 const EmailService = require('../services/emailService');
 
+const { protect, authorize } = require('../middleware/auth');
+const { createNotification } = require('./notifications');
+
 const router = express.Router();
+
+// Protect all admin routes and require admin role
+router.use(protect);
+router.use(authorize('admin', 'rtb-admin'));
 
 // ✅ Get pending employers (for admin approval)
 router.get("/employers/pending", async (req, res) => {
@@ -33,13 +40,18 @@ router.get("/employers/pending", async (req, res) => {
 // ✅ Get all employers (approved + pending)
 router.get("/employers", async (req, res) => {
   try {
-    const { page = 1, limit = 10, status } = req.query;
+    // Support both `status=approved|pending` and `isApproved=true|false` (frontend may use either)
+    const { page = 1, limit = 10, status, isApproved } = req.query;
     const skip = (page - 1) * limit;
 
     // filter by approval status if provided
     const filter = { role: "employer" };
     if (status === "approved") filter.isApproved = true;
     if (status === "pending") filter.isApproved = false;
+    if (typeof isApproved !== 'undefined') {
+      // allow ?isApproved=true or ?isApproved=false
+      filter.isApproved = (String(isApproved) === 'true');
+    }
 
     const employers = await User.find(filter)
       .select("-password") // ✅ FIXED: exclude only password
@@ -110,7 +122,12 @@ router.put("/employers/:id/approve", async (req, res) => {
     
     if (approve) {
       employer.approvalDate = new Date();
-      // You can set approvedBy if you have req.user available from auth middleware
+      employer.isActive = true; // ensure account is active once approved
+      employer.approvedBy = req.user._id;
+    } else {
+      // If rejected, make sure employer cannot log in or access the system
+      employer.isApproved = false;
+      employer.isActive = false;
     }
 
     // Add admin notes if provided
@@ -129,10 +146,17 @@ router.put("/employers/:id/approve", async (req, res) => {
     try {
       const emailService = new EmailService();
       // Use the email service method that accepts boolean isApproved and optional notes
-      await emailService.sendEmployerApprovalEmail(employer.toObject ? employer.toObject() : employer, employer.isApproved, notes || '');
+      await emailService.sendEmployerApprovalEmail(employer.toObject ? employer.toObject() : employer, employer.isApproved ? 'approved' : 'rejected', notes || '');
     } catch (emailErr) {
       console.error('Failed to send employer approval email:', emailErr);
       // Continue without failing the API response
+    }
+
+    // Create in-app notification for employer
+    try {
+      await createNotification(employer._id, 'employer-approval', `Your application has been ${approve ? 'approved' : 'rejected'}`, notes || (approve ? 'Your account is approved. You can now access the employer dashboard.' : 'Your application was not approved. Please contact support for details.'), { approved: approve });
+    } catch (notifErr) {
+      console.error('Failed to create in-app notification for employer:', notifErr);
     }
 
     res.status(200).json({

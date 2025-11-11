@@ -158,9 +158,10 @@ router.put('/profile', [
     }
 
     // Fields that can be updated
+    // NOTE: include `companyInfo` so employer onboarding can save company profile & logo
     const allowedUpdates = [
       'name', 'email', 'phone', 'location', 'bio', 'avatar',
-      'socialProfiles', 'preferences', 'experience', 'education',
+      'companyInfo', 'socialProfiles', 'preferences', 'experience', 'education',
       'certifications', 'languages', 'availability'
     ];
 

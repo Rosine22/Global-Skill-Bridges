@@ -1,9 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 
-// Type definitions for user profile data
 
-// Education interface
 interface Education {
   institution: string;
   degree: string;
@@ -13,7 +11,6 @@ interface Education {
   description?: string;
 }
 
-// Experience interface
 interface Experience {
   company: string;
   position: string;
@@ -23,7 +20,6 @@ interface Experience {
   current?: boolean;
 }
 
-// Company info interface
 interface CompanyInfo {
   name?: string;
   size?: string;
@@ -33,7 +29,6 @@ interface CompanyInfo {
   logo?: string;
 }
 
-// Mentor info interface
 interface MentorInfo {
   expertise?: string[];
   yearsOfExperience?: number;
@@ -41,14 +36,12 @@ interface MentorInfo {
   bio?: string;
 }
 
-// RTB info interface
 interface RTBInfo {
   department?: string;
   position?: string;
   permissions?: string[];
 }
 
-// Social links interface
 interface SocialLinks {
   linkedin?: string;
   twitter?: string;
@@ -56,7 +49,6 @@ interface SocialLinks {
   portfolio?: string;
 }
 
-// Preferences interface
 interface Preferences {
   emailNotifications?: boolean;
   jobAlerts?: boolean;
@@ -64,7 +56,6 @@ interface Preferences {
   theme?: 'light' | 'dark' | 'system';
 }
 
-// User interface matching backend response
 export interface User {
   id: string;
   name: string;
@@ -93,7 +84,6 @@ export interface User {
   lastLogin?: string;
 }
 
-// Registration data interface
 export interface RegisterData {
   name: string;
   email: string;
@@ -104,7 +94,6 @@ export interface RegisterData {
   avatar?: string;
 }
 
-// Profile update data
 export interface ProfileUpdateData {
   name?: string;
   phone?: string;
@@ -142,7 +131,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -158,12 +146,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Clear error
   const clearError = useCallback(() => {
     setError(null);
   }, []);
 
-  // Save auth data to localStorage
   const saveAuthData = useCallback((token: string, refreshToken: string, userData: User) => {
     localStorage.setItem('token', token);
     localStorage.setItem('refreshToken', refreshToken);
@@ -173,7 +159,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(userData);
   }, []);
 
-  // Clear auth data
   const clearAuthData = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
@@ -183,7 +168,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
-  // Get current user from backend
   const getCurrentUser = useCallback(async () => {
     const storedToken = localStorage.getItem('token');
     if (!storedToken) {
@@ -221,12 +205,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [clearAuthData]);
 
-  // Initialize auth state on mount
+
   useEffect(() => {
     getCurrentUser();
   }, [getCurrentUser]);
 
-  // Register new user
   const register = async (userData: RegisterData): Promise<{ success: boolean; message?: string }> => {
     try {
       setLoading(true);
@@ -259,7 +242,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Login user
   const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     try {
       setLoading(true);
@@ -292,7 +274,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Logout user
   const logout = async (): Promise<void> => {
     try {
       await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH}/logout`, {
@@ -310,7 +291,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Forgot password
   const forgotPassword = async (email: string): Promise<{ success: boolean; message: string }> => {
     try {
       setLoading(true);
@@ -347,7 +327,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Reset password
   const resetPassword = async (token: string, password: string, confirmPassword: string): Promise<{ success: boolean; message: string }> => {
     try {
       setLoading(true);
@@ -379,7 +358,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Auto-login after successful password reset
         if (data.token && data.refreshToken && data.user) {
           saveAuthData(data.token, data.refreshToken, data.user);
         }
@@ -402,8 +380,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     }
   };
-
-  // Change password (for logged in users)
   const changePassword = async (currentPassword: string, newPassword: string, confirmPassword: string): Promise<{ success: boolean; message: string }> => {
     try {
       setLoading(true);
@@ -454,7 +430,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Verify email
   const verifyEmail = async (verificationToken: string): Promise<{ success: boolean; message: string }> => {
     try {
       setLoading(true);
@@ -470,7 +445,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Refresh user data
         await getCurrentUser();
         return {
           success: true,
@@ -492,7 +466,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Update profile
   const updateProfile = async (data: ProfileUpdateData): Promise<{ success: boolean; message: string; user?: User }> => {
     try {
       setLoading(true);
@@ -538,7 +511,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Refresh auth token
   const refreshAuthToken = async (): Promise<boolean> => {
     try {
       const storedRefreshToken = localStorage.getItem('refreshToken');

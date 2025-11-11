@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useNotification } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserContext } from '../../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
@@ -40,6 +41,7 @@ function EmployerOnboarding() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const notify = useNotification();
   const [profile, setProfile] = useState<CompanyProfile>({
     companyName: '',
     website: '',
@@ -196,14 +198,14 @@ function EmployerOnboarding() {
       // Simulate API call delay for better UX
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Show success message
-      alert('Company profile submitted successfully! Your account is now pending admin approval. You will receive an email notification once approved.');
+  // Show success message
+  notify.success('Company profile submitted successfully! Your account is now pending admin approval. You will receive an email notification once approved.');
       
       // Redirect to a pending approval page
       navigate('/employer/pending-approval');
     } catch (error) {
       console.error('Error submitting profile:', error);
-      alert('There was an error submitting your profile. Please try again.');
+      notify.error('There was an error submitting your profile. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

@@ -1,4 +1,4 @@
-import React from 'react';
+import { ReactNode } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UserProvider } from './contexts/UserContext';
@@ -52,7 +52,7 @@ import RTBSkillsGapPage from './pages/rtb/SkillsGapPage';
 import RTBProgramsPage from './pages/rtb/ProgramsPage';
 import RTBReportsPage from './pages/rtb/ReportsPage';
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   
   if (loading) {
@@ -72,18 +72,23 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function DashboardRouter() {
   const { user } = useAuth();
+  // Type guard for optional employer approvalStatus which isn't part of the core User type
+  function hasApprovalStatus(u: unknown): u is { approvalStatus?: string } {
+    return typeof u === 'object' && u !== null && 'approvalStatus' in u;
+  }
+
+  const approvalStatus = hasApprovalStatus(user) ? (user as { approvalStatus?: string }).approvalStatus : undefined;
   
   if (!user) return <Navigate to="/login" />;
   
-  // Handle employer approval workflow
   if (user.role === 'employer') {
-    if (!user.profileComplete) {
+    if (!user.profileCompletion || user.profileCompletion < 100) {
       return <Navigate to="/employer/onboarding" />;
     }
-    if (user.approvalStatus === 'pending') {
+    if (approvalStatus === 'pending') {
       return <Navigate to="/employer/pending-approval" />;
     }
-    if (user.approvalStatus === 'rejected') {
+    if (approvalStatus === 'rejected') {
       return <Navigate to="/employer/pending-approval" />;
     }
   }
@@ -349,9 +354,7 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-              
-              {/* Catch all route for unmatched paths */}
-              <Route path="*" element={<Navigate to="/" replace />} />
+                            <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
         </Router>

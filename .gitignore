@@ -39,9 +39,7 @@ Thumbs.db
 *.njsproj
 *.sln
 
-# Documentation / guides that shouldn't be pushed
-# Ignore project guides and local docs (but keep main README.md)
-# Patterns below will ignore common guide filenames while preserving README.md
+# Documentation files to ignore
 *GUIDE*.md
 *_GUIDE.md
 *SETUP*.md

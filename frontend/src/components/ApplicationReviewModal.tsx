@@ -1,4 +1,5 @@
-﻿import React, { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
+import { useNotification } from '../contexts/NotificationContext';
 import { Application } from '../contexts/UserContext';
 import { User, Star, Send, FileText,Download, MessageSquare } from 'lucide-react';
 import { getApiUrl } from '../config/api';
@@ -26,9 +27,10 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
   });
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState(false);
+  const notify = useNotification();
 
   // Reset form when application changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen && application) {
       setFeedback({
         rating: 0,
@@ -275,11 +277,11 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
                           if (data.success && data.data.previewUrl) {
                             window.open(data.data.previewUrl, '_blank');
                           } else {
-                            alert('CV preview URL not available');
+                            notify.error('CV preview URL not available');
                           }
-                        } catch (error) {
+                          } catch (error) {
                           console.error('Error fetching CV preview:', error);
-                          alert('Failed to preview CV. Please try again.');
+                          notify.error('Failed to preview CV. Please try again.');
                         }
                       }}
                       className="flex items-center px-4 py-2 text-blue-600 border-2 border-blue-600 rounded-lg hover:bg-blue-50 font-semibold text-sm"
@@ -311,11 +313,11 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
                             link.click();
                             document.body.removeChild(link);
                           } else {
-                            alert('CV download URL not available');
+                            notify.error('CV download URL not available');
                           }
                         } catch (error) {
                           console.error('Error downloading CV:', error);
-                          alert('Failed to download CV. Please try again.');
+                          notify.error('Failed to download CV. Please try again.');
                         }
                       }}
                       className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm"

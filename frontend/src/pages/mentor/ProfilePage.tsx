@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useUserContext } from '../../contexts/UserContext';
+import { useNotification } from '../../contexts/NotificationContext';
 import DashboardLayout from '../../components/DashboardLayout';
 import { 
   ArrowLeft,
@@ -106,6 +107,7 @@ function MentorProfilePage() {
 
   // Get mentor profile from context
   const mentor = getMentorById(id || '1');
+  const notify = useNotification();
   
   if (!mentor) {
     return (
@@ -172,8 +174,8 @@ function MentorProfilePage() {
       duration: bookingForm.duration
     });
 
-    // Show success message and reset form
-    alert('Session booked successfully! You will receive a calendar invitation soon.');
+  // Show success message and reset form
+  notify.success('Session booked successfully! You will receive a calendar invitation soon.');
     setShowBookingModal(false);
     setSelectedTime('');
     setSelectedDate('');
@@ -192,8 +194,8 @@ function MentorProfilePage() {
     requestMentorship(mentorProfile.id, requestForm.field, requestForm.message);
     setShowRequestForm(false);
     setRequestForm({ field: '', message: '' });
-    // Show success message or redirect
-    alert('Mentorship request sent successfully!');
+  // Show success message or redirect
+  notify.success('Mentorship request sent successfully!');
   };
 
   const reviews = [

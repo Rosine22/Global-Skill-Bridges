@@ -1,18 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { 
   Award, 
   Search, 
-  Filter, 
   CheckCircle, 
   XCircle, 
   Clock,
   Eye,
   Download,
-  User,
-  FileText,
-  Shield,
-  AlertTriangle
+  User
 } from 'lucide-react';
 
 interface VerificationRequest {

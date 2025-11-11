@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import ConfirmDialog from '../../components/ConfirmDialog';
+import { useNotification } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserContext } from '../../contexts/UserContext';
 import DashboardLayout from '../../components/DashboardLayout';
@@ -18,6 +20,10 @@ function MentorDashboard() {
   const { mentorshipRequests, updateMentorshipStatus, getMentorSessions, updateSessionStatus } = useUserContext();
   const [activeTab, setActiveTab] = useState<'overview' | 'calendar'>('overview');
   const [sessionFilter, setSessionFilter] = useState<'upcoming' | 'past' | 'all'>('upcoming');
+  const notify = useNotification();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [confirmAction, setConfirmAction] = useState<() => void>(() => {});
 
   // Filter mentorship requests for this mentor
   const mentorRequests = mentorshipRequests.filter(req => req.mentorId === user?.id);
@@ -104,11 +110,12 @@ function MentorDashboard() {
 
   const handleRescheduleSession = (sessionId: string) => {
     // In a real app, this would open a reschedule modal
-    const confirmed = confirm('Are you sure you want to reschedule this session? This will notify the mentee.');
-    if (confirmed) {
+    setConfirmMessage('Are you sure you want to reschedule this session? This will notify the mentee.');
+    setConfirmAction(() => () => {
       updateSessionStatus(sessionId, 'pending');
-      alert('Session has been marked for rescheduling. The mentee will be notified.');
-    }
+      notify.info('Session has been marked for rescheduling. The mentee will be notified.');
+    });
+    setConfirmOpen(true);
   };
 
   const handleConfirmSession = (sessionId: string) => {
@@ -117,11 +124,13 @@ function MentorDashboard() {
   };
 
   const handleDeclineSession = (sessionId: string) => {
-    const confirmed = confirm('Are you sure you want to decline this session? The mentee will be notified.');
-    if (confirmed) {
+    setConfirmMessage('Are you sure you want to decline this session? The mentee will be notified.');
+    setConfirmAction(() => () => {
       updateSessionStatus(sessionId, 'declined');
+      notify.info('Session declined');
       console.log('Session declined:', sessionId);
-    }
+    });
+    setConfirmOpen(true);
   };
 
   return (
@@ -420,7 +429,7 @@ function MentorDashboard() {
                         )}
                         {isPast && session.status === 'completed' && (
                           <button 
-                            onClick={() => alert(`Session Notes: ${session.notes || 'No notes recorded'}`)}
+                            onClick={() => notify.info(`Session Notes: ${session.notes || 'No notes recorded'}`)}
                             className="text-green-600 hover:text-green-700 text-sm font-medium"
                           >
                             View Notes
@@ -467,6 +476,17 @@ function MentorDashboard() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        message={confirmMessage}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          try { confirmAction(); } catch (e) { console.error(e); }
+        }}
+      />
+
     </DashboardLayout>
   );
 }

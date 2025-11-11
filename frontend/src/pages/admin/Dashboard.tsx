@@ -110,7 +110,6 @@ function AdminDashboard() {
     }
   };
 
-  // Removed unused navigation variable
 
   if (loading) {
     return (
@@ -215,7 +214,6 @@ function AdminDashboard() {
           </div>
         </div>
 
-        {/* Recent Users Pending Approval */}
         {stats.pendingUsers > 0 && (
           <div className="bg-white shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
@@ -269,7 +267,6 @@ function AdminDashboard() {
             <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Job Postings</h3>
             {jobs.length === 0 ? (
               <div className="text-center py-8">
-                {/* <p className="text-gray-500">No job postings yet.</p> */}
               </div>
             ) : (
               <div className="space-y-3">

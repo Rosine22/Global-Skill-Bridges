@@ -3,7 +3,6 @@ const { Schema, model } = mongoose;
 
 const jobSchema = new Schema(
   {
-    // Basic Job Information
     title: {
       type: String,
       required: [true, "Job title is required"],
@@ -16,7 +15,6 @@ const jobSchema = new Schema(
       maxlength: [5000, "Description cannot exceed 5000 characters"],
     },
 
-    // Company Information
     employer: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -27,7 +25,6 @@ const jobSchema = new Schema(
       required: [true, "Company name is required"],
     },
 
-    // Location Information
     location: {
       city: {
         type: String,
@@ -49,7 +46,6 @@ const jobSchema = new Schema(
       },
     },
 
-    // Job Details
     type: {
       type: String,
       enum: ["full-time", "part-time", "contract", "internship", "temporary"],
@@ -78,7 +74,7 @@ const jobSchema = new Schema(
       default: "entry",
     },
 
-    // Requirements
+   
     requirements: [
       {
         type: String,
@@ -103,7 +99,7 @@ const jobSchema = new Schema(
       },
     ],
 
-    // Experience Requirements
+    
     experienceRequired: {
       min: {
         type: Number,
@@ -117,7 +113,7 @@ const jobSchema = new Schema(
       },
     },
 
-    // Education Requirements
+   
     educationRequired: {
       level: {
         type: String,
@@ -135,7 +131,7 @@ const jobSchema = new Schema(
       field: String,
     },
 
-    // Compensation
+    
     salary: {
       min: Number,
       max: Number,
@@ -158,7 +154,7 @@ const jobSchema = new Schema(
       },
     },
 
-    // Benefits
+    
     benefits: [
       {
         type: String,
@@ -182,7 +178,7 @@ const jobSchema = new Schema(
     ],
     customBenefits: [String],
 
-    // Application Details
+    
     applicationDeadline: Date,
     startDate: Date,
     applicationMethod: {
@@ -193,7 +189,7 @@ const jobSchema = new Schema(
     externalUrl: String,
     contactEmail: String,
 
-    // Job Status
+    
     status: {
       type: String,
       enum: ["draft", "active", "paused", "closed", "expired"],
@@ -208,7 +204,7 @@ const jobSchema = new Schema(
       default: false,
     },
 
-    // Analytics
+    
     views: {
       type: Number,
       default: 0,
@@ -218,11 +214,11 @@ const jobSchema = new Schema(
       default: 0,
     },
 
-    // SEO and Metadata
+    
     slug: String,
     tags: [String],
 
-    // Verification (for compliance)
+    
     isVerified: {
       type: Boolean,
       default: false,
@@ -233,7 +229,7 @@ const jobSchema = new Schema(
     },
     verificationDate: Date,
 
-    // Archive Information
+    
     archivedAt: Date,
     archivedBy: {
       type: Schema.Types.ObjectId,
@@ -247,7 +243,7 @@ const jobSchema = new Schema(
   }
 );
 
-// Indexes for better query performance
+
 jobSchema.index({ status: 1, createdAt: -1 });
 jobSchema.index({ employer: 1 });
 jobSchema.index({ "location.country": 1 });
@@ -258,7 +254,7 @@ jobSchema.index({ title: "text", description: "text", company: "text" });
 jobSchema.index({ applicationDeadline: 1 });
 jobSchema.index({ featured: -1, createdAt: -1 });
 
-// Virtual for application count from Application model
+
 jobSchema.virtual("applicationCount", {
   ref: "Application",
   localField: "_id",
@@ -266,7 +262,7 @@ jobSchema.virtual("applicationCount", {
   count: true,
 });
 
-// Virtual for recent applications
+
 jobSchema.virtual("recentApplications", {
   ref: "Application",
   localField: "_id",
@@ -277,7 +273,6 @@ jobSchema.virtual("recentApplications", {
   },
 });
 
-// Pre-save middleware to generate slug
 jobSchema.pre("save", function (next) {
   if (this.isModified("title") || this.isNew) {
     this.slug = this.title
@@ -289,13 +284,11 @@ jobSchema.pre("save", function (next) {
   next();
 });
 
-// Method to check if job is expired
 jobSchema.methods.isExpired = function () {
   if (!this.applicationDeadline) return false;
   return new Date() > this.applicationDeadline;
 };
 
-// Method to get formatted salary
 jobSchema.methods.getFormattedSalary = function () {
   if (!this.salary || (!this.salary.min && !this.salary.max)) {
     return "Salary not specified";
@@ -313,13 +306,11 @@ jobSchema.methods.getFormattedSalary = function () {
   }
 };
 
-// Method to increment views
 jobSchema.methods.incrementViews = function () {
   this.views = (this.views || 0) + 1;
   return this.save();
 };
 
-// Static method to find jobs by skills
 jobSchema.statics.findBySkills = function (skills) {
   return this.find({
     "skills.name": { $in: skills },
@@ -331,7 +322,6 @@ jobSchema.statics.findBySkills = function (skills) {
   });
 };
 
-// Static method to find featured jobs
 jobSchema.statics.findFeatured = function (limit = 10) {
   return this.find({
     featured: true,

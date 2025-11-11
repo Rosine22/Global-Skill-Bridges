@@ -22,7 +22,7 @@ dist-ssr
 *.sw?
 .env
 
-# Frontend docs / guides to ignore
+# Frontend docs 
 *GUIDE*.md
 *_GUIDE.md
 *SETUP*.md

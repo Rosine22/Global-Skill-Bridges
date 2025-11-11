@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useNotification } from '../../contexts/NotificationContext';
 import DashboardLayout from '../../components/DashboardLayout';
 import { 
-  GraduationCap, 
-  TrendingUp, 
-  Users, 
-  Award, 
+  GraduationCap,
+  TrendingUp,
+  Users,
+  Award,
   Target,
   CheckCircle,
   AlertTriangle,
   BarChart3,
   Download,
-  Calendar,
   MapPin,
   Briefcase
 } from 'lucide-react';
@@ -213,10 +213,11 @@ function RTBProgramsPage() {
     averageRating: (programs.reduce((sum, p) => sum + p.rating, 0) / programs.length).toFixed(1),
     totalInternational: programs.reduce((sum, p) => sum + p.internationalPlacements, 0)
   };
+  const notify = useNotification();
 
   const exportReport = () => {
     console.log('Exporting program effectiveness report...');
-    alert('Program effectiveness report exported successfully!');
+    notify.success('Program effectiveness report exported successfully!');
   };
 
   return (

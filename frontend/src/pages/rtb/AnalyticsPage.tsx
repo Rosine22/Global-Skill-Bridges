@@ -1,22 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useNotification } from '../../contexts/NotificationContext';
 import DashboardLayout from '../../components/DashboardLayout';
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Users, 
-  MapPin, 
-  Award, 
-  Briefcase,
-  Download,
-  Calendar,
-  Filter,
-  PieChart,
-  LineChart
-} from 'lucide-react';
+import { TrendingUp, MapPin, Award, Download } from 'lucide-react';
 
 function RTBAnalyticsPage() {
   const [timeRange, setTimeRange] = useState('12months');
-  const [selectedProgram, setSelectedProgram] = useState('all');
 
   const employmentData = [
     { program: 'Software Development', employed: 85, seeking: 12, unemployed: 3 },
@@ -51,10 +39,12 @@ function RTBAnalyticsPage() {
     { skill: 'Data Analysis', demand: 85, graduates: 42, gap: 43 }
   ];
 
+  const notify = useNotification();
+
   const exportData = (type: string) => {
     // Mock export functionality
     console.log(`Exporting ${type} data...`);
-    alert(`${type} data exported successfully!`);
+    notify.success(`${type} data exported successfully!`);
   };
 
   return (

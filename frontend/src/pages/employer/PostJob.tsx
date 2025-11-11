@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNotification } from '../../contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import { useUserContext } from '../../contexts/UserContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -27,6 +28,7 @@ function PostJobPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const notify = useNotification();
 
   // Comprehensive list of countries
   const countries = [
@@ -137,11 +139,11 @@ function PostJobPage() {
       });
 
       // Show success message and redirect
-      alert('Job posted successfully!');
+      notify.success('Job posted successfully!');
       navigate('/dashboard');
     } catch (error) {
       console.error('Error posting job:', error);
-      alert('Failed to post job. Please try again.');
+      notify.error('Failed to post job. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

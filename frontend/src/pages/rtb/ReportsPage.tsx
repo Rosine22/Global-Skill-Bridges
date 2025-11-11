@@ -1,15 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { 
   Download, 
   FileText, 
   Calendar, 
-  Filter, 
   BarChart3,
-  Users,
   TrendingUp,
   Award,
-  MapPin,
   Briefcase,
   Clock,
   CheckCircle

@@ -293,6 +293,18 @@ const userSchema = new mongoose.Schema(
         default: 0,
       },
     },
+    // In-app notifications stored on the user document
+    notifications: [
+      {
+        type: { type: String },
+        title: { type: String },
+        message: { type: String },
+        data: { type: mongoose.Schema.Types.Mixed },
+        read: { type: Boolean, default: false },
+        readAt: Date,
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   {
     timestamps: true,

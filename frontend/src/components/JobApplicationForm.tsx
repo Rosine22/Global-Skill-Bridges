@@ -64,8 +64,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 5; // Added screening questions step
-
+  const totalSteps = 5; 
   const validateStep = (step: number): boolean => {
     const newErrors: Record<string, string> = {};
 

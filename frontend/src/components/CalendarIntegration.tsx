@@ -36,7 +36,6 @@ const CalendarIntegration: React.FC<CalendarIntegrationProps> = ({
   useEffect(() => {
     if (isConnected) {
       getUpcomingSessions();
-      // Get availability for next 7 days
       const endDate = new Date();
       endDate.setDate(endDate.getDate() + 7);
       getAvailability(new Date().toISOString(), endDate.toISOString());

@@ -8,17 +8,6 @@ interface BadgeProps {
   className?: string;
 }
 
-/**
- * Unified Badge Component - 4-Color System
- * 
- * Color Guide:
- * - primary (teal): Primary status - Active, Verified, Primary
- * - success (green): Success status - Approved, Completed, Success
- * - secondary (blue): Info/In Progress - New, Info, In Progress
- * - warning (yellow): Pending/Warning - Pending, Under Review
- * - danger (red): Negative status - Rejected, Failed, Cancelled
- * - gray: Neutral status - Inactive, Draft, Archived
- */
 export const Badge: React.FC<BadgeProps> = ({
   variant = 'primary',
   size = 'medium',

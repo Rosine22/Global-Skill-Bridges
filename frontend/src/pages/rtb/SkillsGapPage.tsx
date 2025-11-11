@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useNotification } from '../../contexts/NotificationContext';
 import DashboardLayout from '../../components/DashboardLayout';
 import { 
   TrendingUp, 
@@ -8,15 +9,11 @@ import {
   Award, 
   Target,
   Download,
-  Filter,
-  BarChart3,
-  Users,
   Briefcase
 } from 'lucide-react';
 
 function RTBSkillsGapPage() {
   const [selectedSector, setSelectedSector] = useState('all');
-  const [timeframe, setTimeframe] = useState('current');
 
   const skillsGapData = [
     {
@@ -178,9 +175,11 @@ function RTBSkillsGapPage() {
     }
   };
 
+  const notify = useNotification();
+
   const exportReport = () => {
     console.log('Exporting skills gap report...');
-    alert('Skills gap analysis report exported successfully!');
+    notify.success('Skills gap analysis report exported successfully!');
   };
 
   return (

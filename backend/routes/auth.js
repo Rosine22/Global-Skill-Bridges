@@ -7,6 +7,8 @@ const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
 const { protect, rateLimitByUser } = require("../middleware/auth");
 const EmailService = require("../services/emailService");
+// Import in-app notification helper
+const { createNotification } = require("./notifications");
 
 const router = express.Router();
 
@@ -218,18 +220,23 @@ router.post("/register", registerValidation, async (req, res, next) => {
     // If this is an employer registration, notify admins to review the application
     try {
       if (user.role === 'employer') {
-        // Notify admin(s) about the new employer registration
+        // Notify admin(s) by email
         const adminNotifyResult = await emailService.sendNewEmployerNotificationToAdmin(user);
         if (!adminNotifyResult.success) {
-          console.error('Failed to notify admin about new employer:', adminNotifyResult.error);
+          console.error('Failed to notify admin about new employer (email):', adminNotifyResult.error);
         }
 
-        // Also send the employer a 'pending' notification so they know their account is under review
+        // Create in-app notification for admins (find all admin users)
         try {
-          await emailService.sendEmployerApprovalEmail(user, false, 'Your application is under review.');
-        } catch (err) {
-          console.error('Failed to send employer pending notification:', err);
+          const admins = await User.find({ role: { $in: ['admin', 'rtb-admin'] } }).select('_id');
+          await Promise.all(admins.map(a => createNotification(a._id, 'employer-registration', 'New Employer Registration', `A new employer (${user.companyInfo?.name || user.name}) registered and requires approval.`, { userId: user._id })));
+        } catch (notifErr) {
+          console.error('Failed to create in-app admin notification:', notifErr);
         }
+
+        // NOTE: Do NOT send approval/rejection emails to the employer at registration.
+        // The employer should only receive the final approval/rejection email after an admin reviews the application.
+        // We still notify admins (above) so they can review and make the decision.
       }
     } catch (notifyErr) {
       console.error('Error during employer/admin notification:', notifyErr);
@@ -328,6 +335,14 @@ router.post("/login", loginValidation, async (req, res, next) => {
       return res.status(401).json({
         success: false,
         message: "Account has been blocked. Contact support.",
+      });
+    }
+
+    // Prevent employers who are not approved from logging in
+    if (user.role === 'employer' && !user.isApproved) {
+      return res.status(403).json({
+        success: false,
+        message: 'Employer account is pending approval. You will be notified once an admin reviews your application.'
       });
     }
 

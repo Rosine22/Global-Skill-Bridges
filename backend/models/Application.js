@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 
 const applicationSchema = new mongoose.Schema(
   {
-    // Core References
     job: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Job",
@@ -19,7 +18,6 @@ const applicationSchema = new mongoose.Schema(
       required: true,
     },
 
-    // Application Content
     coverLetter: {
       type: String,
       maxlength: [2000, "Cover letter cannot exceed 2000 characters"],
@@ -34,7 +32,6 @@ const applicationSchema = new mongoose.Schema(
       description: String,
     },
 
-    // Additional Documents
     additionalDocuments: [
       {
         name: String,
@@ -53,7 +50,6 @@ const applicationSchema = new mongoose.Schema(
       },
     ],
 
-    // Application Status
     status: {
       type: String,
       enum: [
@@ -74,7 +70,6 @@ const applicationSchema = new mongoose.Schema(
       default: "submitted",
     },
 
-    // Interview Information
     interviews: [
       {
         type: {
@@ -83,7 +78,7 @@ const applicationSchema = new mongoose.Schema(
           default: "video",
         },
         scheduledDate: Date,
-        duration: Number, // in minutes
+        duration: Number, 
         location: String,
         meetingLink: String,
         interviewer: {
@@ -106,7 +101,6 @@ const applicationSchema = new mongoose.Schema(
       },
     ],
 
-    // Feedback and Notes
     employerFeedback: {
       rating: {
         type: Number,
@@ -119,7 +113,6 @@ const applicationSchema = new mongoose.Schema(
       overallImpression: String,
     },
 
-    // Internal Notes (only visible to employer)
     internalNotes: [
       {
         note: String,
@@ -134,7 +127,6 @@ const applicationSchema = new mongoose.Schema(
       },
     ],
 
-    // Communication History
     messages: [
       {
         from: {
@@ -160,7 +152,6 @@ const applicationSchema = new mongoose.Schema(
       },
     ],
 
-    // Salary Negotiation
     salaryNegotiation: {
       applicantExpectation: {
         min: Number,
@@ -182,7 +173,7 @@ const applicationSchema = new mongoose.Schema(
       },
     },
 
-    // Matching Score (calculated)
+    
     matchingScore: {
       overall: Number,
       skillsMatch: Number,
@@ -191,7 +182,7 @@ const applicationSchema = new mongoose.Schema(
       locationMatch: Number,
     },
 
-    // Tracking Information
+    
     source: {
       type: String,
       enum: ["direct", "job-board", "referral", "social-media", "career-fair"],
@@ -199,7 +190,7 @@ const applicationSchema = new mongoose.Schema(
     },
     referralSource: String,
 
-    // Withdrawal Information
+    
     withdrawnBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -207,7 +198,7 @@ const applicationSchema = new mongoose.Schema(
     withdrawalReason: String,
     withdrawnAt: Date,
 
-    // Follow-up Information
+    
     followUpReminders: [
       {
         scheduledDate: Date,
@@ -234,15 +225,14 @@ const applicationSchema = new mongoose.Schema(
   }
 );
 
-// Indexes for better performance
-applicationSchema.index({ job: 1, applicant: 1 }, { unique: true }); // Prevent duplicate applications
+applicationSchema.index({ job: 1, applicant: 1 }, { unique: true }); 
 applicationSchema.index({ applicant: 1, status: 1 });
 applicationSchema.index({ employer: 1, status: 1 });
 applicationSchema.index({ job: 1, status: 1 });
 applicationSchema.index({ createdAt: -1 });
 applicationSchema.index({ "matchingScore.overall": -1 });
 
-// Virtual for job details
+
 applicationSchema.virtual("jobDetails", {
   ref: "Job",
   localField: "job",
@@ -250,7 +240,7 @@ applicationSchema.virtual("jobDetails", {
   justOne: true,
 });
 
-// Virtual for applicant details
+
 applicationSchema.virtual("applicantDetails", {
   ref: "User",
   localField: "applicant",
@@ -258,11 +248,11 @@ applicationSchema.virtual("applicantDetails", {
   justOne: true,
 });
 
-// Pre-save middleware to calculate matching score
+
 applicationSchema.pre("save", async function (next) {
   if (this.isNew) {
     try {
-      // Populate job and applicant for matching calculation
+  
       await this.populate(["job", "applicant"]);
 
       if (this.job && this.applicant) {
@@ -275,7 +265,6 @@ applicationSchema.pre("save", async function (next) {
   next();
 });
 
-// Method to calculate matching score
 applicationSchema.methods.calculateMatchingScore = function () {
   if (!this.job || !this.applicant) return { overall: 0 };
 
@@ -284,7 +273,6 @@ applicationSchema.methods.calculateMatchingScore = function () {
   let educationMatch = 0;
   let locationMatch = 0;
 
-  // Skills matching
   if (this.job.skills && this.applicant.skills) {
     const jobSkills = this.job.skills.map((s) => s.name.toLowerCase());
     const applicantSkills = this.applicant.skills.map((s) =>
@@ -296,7 +284,6 @@ applicationSchema.methods.calculateMatchingScore = function () {
     skillsMatch = (matchingSkills.length / jobSkills.length) * 100;
   }
 
-  // Experience matching
   const jobExperience = this.job.experienceRequired?.min || 0;
   const applicantExperience = this.applicant.experience?.length || 0;
   if (jobExperience === 0) {
@@ -308,13 +295,11 @@ applicationSchema.methods.calculateMatchingScore = function () {
     );
   }
 
-  // Education matching
   const jobEducation = this.job.educationRequired?.level;
   const applicantEducation = this.applicant.education?.[0]?.degree;
   if (!jobEducation || jobEducation === "any") {
     educationMatch = 100;
   } else if (applicantEducation) {
-    // Simple matching - can be improved with education level hierarchy
     educationMatch = applicantEducation
       .toLowerCase()
       .includes(jobEducation.toLowerCase())
@@ -322,7 +307,6 @@ applicationSchema.methods.calculateMatchingScore = function () {
       : 50;
   }
 
-  // Location matching
   const jobCountry = this.job.location?.country;
   const applicantCountry = this.applicant.location?.country;
   if (this.job.location?.isRemote) {
@@ -332,7 +316,7 @@ applicationSchema.methods.calculateMatchingScore = function () {
       jobCountry.toLowerCase() === applicantCountry.toLowerCase() ? 100 : 30;
   }
 
-  // Calculate overall score (weighted average)
+  
   const overall =
     skillsMatch * 0.4 +
     experienceMatch * 0.3 +
@@ -348,7 +332,6 @@ applicationSchema.methods.calculateMatchingScore = function () {
   };
 };
 
-// Method to update status with validation
 applicationSchema.methods.updateStatus = function (newStatus, updatedBy) {
   const validTransitions = {
     submitted: ["under-review", "rejected", "withdrawn"],
@@ -382,7 +365,6 @@ applicationSchema.methods.updateStatus = function (newStatus, updatedBy) {
 
   this.status = newStatus;
 
-  // Add internal note about status change
   this.internalNotes.push({
     note: `Status changed from ${currentStatus} to ${newStatus}`,
     addedBy: updatedBy,
@@ -392,7 +374,6 @@ applicationSchema.methods.updateStatus = function (newStatus, updatedBy) {
   return this.save();
 };
 
-// Static method to get application statistics
 applicationSchema.statics.getApplicationStats = function (
   employerId,
   timeframe = 30

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import DashboardLayout from '../../components/DashboardLayout';
 import { Calendar, Clock, User, Video, Phone, Plus, CreditCard as Edit3, Trash2, CheckCircle, AlertCircle, MessageSquare } from 'lucide-react';

@@ -31,13 +31,10 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   const getNavItems = () => {
-    // Base items without Messages - Messages will be added conditionally
     const baseItems = [
       { name: 'Dashboard', href: '/dashboard', icon: Home },
       { name: 'Profile', href: '/profile', icon: User }
     ];
-
-    // Add Messages only for job-seekers and mentors
     const baseWithMessages = user?.role === 'job-seeker' || user?.role === 'mentor' 
       ? [...baseItems, { name: 'Messages', href: '/messages', icon: MessageSquare }]
       : baseItems;
@@ -90,9 +87,8 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-fit bg-gray-50 flex">
-      {/* Sidebar */}
       <div className="w-64 bg-white shadow-sm border-r flex flex-col">
-        {/* Logo */}
+    
         <div className="p-6 border-b">
           <Link to="/" className="flex items-center">
             <Globe className="h-8 w-8 text-primary-600" />
@@ -100,7 +96,6 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
           </Link>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 p-6">
           <ul className="space-y-2">
             {navItems.map((item) => {
@@ -125,7 +120,6 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
           </ul>
         </nav>
 
-        {/* User Profile & Logout */}
         <div className="p-6 border-t">
           <div className="flex items-center mb-4">
             <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
@@ -148,9 +142,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
         <header className="bg-white shadow-sm border-b">
           <div className="px-6 py-4 flex justify-between items-center">
             <h1 className="text-2xl font-semibold text-gray-900">
@@ -175,8 +167,6 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </div>
         </header>
-
-        {/* Page Content */}
         <main className="flex-1 p-6">
           {children}
         </main>

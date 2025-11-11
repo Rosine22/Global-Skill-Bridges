@@ -42,8 +42,9 @@ function NotificationsPage() {
         const data = await response.json();
         // Expecting data.notifications or data.data
         setNotifications(data.notifications || data.data || []);
-      } catch (err: any) {
-        setError(err.message || 'Error fetching notifications');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || 'Error fetching notifications');
       } finally {
         setLoading(false);
       }

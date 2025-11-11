@@ -1,9 +1,11 @@
 import { ChangeEvent, useState } from 'react';
 import axios from 'axios';
+import { useNotification } from '../contexts/NotificationContext';
 
 function FileUploader() {
   const [file, setFile] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState('');
+  const notify = useNotification();
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -12,7 +14,7 @@ function FileUploader() {
   };
 
   const handleUpload = async () => {
-    if (!file) return alert('Please select a file first');
+  if (!file) return notify.error('Please select a file first');
 
     const formData = new FormData();
     formData.append('file', file);
@@ -24,7 +26,7 @@ function FileUploader() {
       setFileUrl(`http://localhost:5000${res.data.fileUrl}`);
     } catch (err) {
       console.error(err);
-      alert('Error uploading file');
+      notify.error('Error uploading file');
     }
   };
 

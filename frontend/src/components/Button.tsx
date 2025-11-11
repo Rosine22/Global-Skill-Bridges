@@ -8,22 +8,6 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: React.ReactNode;
   iconPosition?: 'left' | 'right';
 }
-
-/**
- * Unified Button Component - 4-Color System
- * 
- * Color Guide:
- * - primary (teal): Main actions - Submit, Save, Create, Post, Get Started
- * - secondary (blue): Alternative actions - View, Info, Back, Cancel
- * - success (green): Positive actions - Approve, Accept, Confirm, Complete
- * - danger (red): Destructive actions - Delete, Reject, Remove
- * 
- * Examples:
- * <Button variant="primary">Submit</Button>
- * <Button variant="secondary" size="small">View Details</Button>
- * <Button variant="success" icon={<Check />}>Approve</Button>
- * <Button variant="danger" icon={<Trash />}>Delete</Button>
- */
 export const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'medium',

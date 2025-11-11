@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNotification } from '../../contexts/NotificationContext';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserContext, Application } from '../../contexts/UserContext';
 import DashboardLayout from '../../components/DashboardLayout';
@@ -10,6 +12,10 @@ function EmployerDashboard() {
   const { jobs, applications, updateApplicationStatus } = useUserContext();
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const notify = useNotification();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [confirmAction, setConfirmAction] = useState<() => void>(() => {});
   
   // Filter jobs posted by current employer
   const employerJobs = jobs.filter(job => 
@@ -42,12 +48,12 @@ function EmployerDashboard() {
 
   const handleStatusUpdate = (applicationId: string, newStatus: Application['status']) => {
     updateApplicationStatus(applicationId, newStatus);
-    alert(`Application status updated to: ${newStatus}`);
+    notify.success(`Application status updated to: ${newStatus}`);
   };
 
   const handleSendMessage = (applicationId: string, message: string) => {
     console.log(`Sending message to application ${applicationId}:`, message);
-    alert('Message sent successfully!');
+    notify.success('Message sent successfully!');
   };
 
   return (
@@ -181,7 +187,7 @@ function EmployerDashboard() {
                             if (jobApplications.length > 0) {
                               handleViewApplicationDetails(jobApplications[0].id);
                             } else {
-                              alert('No applications for this job yet.');
+                              notify.info('No applications for this job yet.');
                             }
                           }}
                         >
@@ -198,9 +204,11 @@ function EmployerDashboard() {
                         <button 
                           className="text-red-600 hover:text-red-500 text-sm font-medium"
                           onClick={() => {
-                            if (confirm(`Are you sure you want to delete "${job.title}"?`)) {
-                              alert('Job deletion feature will be implemented soon!');
-                            }
+                            setConfirmMessage(`Are you sure you want to delete "${job.title}"?`);
+                            setConfirmAction(() => () => {
+                              notify.info('Job deletion feature will be implemented soon!');
+                            });
+                            setConfirmOpen(true);
                           }}
                         >
                           Delete
@@ -253,11 +261,11 @@ function EmployerDashboard() {
                             if (data.success && data.data.previewUrl) {
                               window.open(data.data.previewUrl, '_blank');
                             } else {
-                              alert('CV preview URL not available');
+                              notify.error('CV preview URL not available');
                             }
                           } catch (error) {
                             console.error('Error fetching CV preview:', error);
-                            alert('Failed to preview CV. Please try again.');
+                            notify.error('Failed to preview CV. Please try again.');
                           }
                         }}
                       >
@@ -288,11 +296,11 @@ function EmployerDashboard() {
                               link.click();
                               document.body.removeChild(link);
                             } else {
-                              alert('CV download URL not available');
+                              notify.error('CV download URL not available');
                             }
                           } catch (error) {
                             console.error('Error downloading CV:', error);
-                            alert('Failed to download CV. Please try again.');
+                            notify.error('Failed to download CV. Please try again.');
                           }
                         }}
                       >
@@ -325,6 +333,16 @@ function EmployerDashboard() {
           onSendMessage={handleSendMessage}
         />
       )}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        message={confirmMessage}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          try { confirmAction(); } catch (e) { console.error(e); }
+        }}
+      />
     </DashboardLayout>
   );
 }

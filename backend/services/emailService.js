@@ -29,7 +29,8 @@ class EmailService {
       });
     }
 
-    this.baseUrl = process.env.FRONTEND_URL || process.env.CLIENT_BASE_URL || 'http://localhost:5174';
+  // Use deployed frontend URL as the default fallback so emails/links point to production
+  this.baseUrl = process.env.FRONTEND_URL || process.env.CLIENT_BASE_URL || 'https://global-skill-bridges-git-2fd38f-uwinezarosine16-2552s-projects.vercel.app';
   }
 
   /**
@@ -888,156 +889,22 @@ class EmailService {
   /**
    * Get employer approval email template
    */
-  getEmployerApprovalTemplate(employer, status, adminMessage) {
-    const isApproved = status === 'approved';
-    const isRejected = status === 'rejected';
-    const loginUrl = `${this.baseUrl}/login`;
-    const dashboardUrl = `${this.baseUrl}/dashboard`;
-
-    const statusConfig = {
-      approved: {
-        subject: ' Your Employer Account has been Approved - Global Skills Bridge',
-        greeting: 'Congratulations!',
-        message: `We're excited to inform you that your employer account for ${employer.companyName} has been approved and is now active.`,
-        action: 'You can now start posting jobs, searching for talent, and accessing all employer features.',
-        color: '#28a745',
-        buttonText: 'Access Your Dashboard',
-        buttonUrl: dashboardUrl
-      },
-      rejected: {
-        subject: ' Employer Account Application Update - Global Skills Bridge',
-        greeting: 'Account Application Update',
-        message: `We regret to inform you that your employer account application for ${employer.companyName} has not been approved at this time.`,
-        action: 'You can review our requirements and submit a new application if you meet the criteria.',
-        color: '#dc3545',
-        buttonText: 'Learn More',
-        buttonUrl: loginUrl
-      },
-      pending: {
-        subject: '⏳ Employer Account Under Review - Global Skills Bridge',
-        greeting: 'Application Received',
-        message: `Thank you for your employer account application for ${employer.companyName}. Your application is currently under review.`,
-        action: 'We will notify you once the review process is complete. This typically takes 2-3 business days.',
-        color: '#ffc107',
-        buttonText: 'Check Status',
-        buttonUrl: loginUrl
-      }
-    };
-
-    const config = statusConfig[status] || statusConfig.pending;
-
-    const html = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>${config.subject}</title>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background: #f9f9f9; padding: 30px 20px; border-radius: 0 0 8px 8px; }
-          .button { display: inline-block; background: ${config.color}; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; margin: 20px 0; }
-          .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
-          .company-info { background: white; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid ${config.color}; }
-          .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; text-transform: uppercase; font-size: 12px; background: ${config.color}; color: white; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1> Global Skills Bridge</h1>
-          <p>Employer Account ${status.charAt(0).toUpperCase() + status.slice(1)}</p>
-        </div>
-        <div class="content">
-          <h2>${config.greeting}</h2>
-          <p>Dear ${employer.contactPerson || employer.companyName},</p>
-          <p>${config.message}</p>
-          
-          <div class="company-info">
-            <h3>Company Information</h3>
-            <p><strong>Company:</strong> ${employer.companyName}</p>
-            <p><strong>Industry:</strong> ${employer.industry}</p>
-            <p><strong>Location:</strong> ${employer.location}</p>
-            <p><strong>Status:</strong> <span class="status-badge">${status}</span></p>
-            <p><strong>Application Date:</strong> ${new Date(employer.createdAt).toLocaleDateString()}</p>
-          </div>
-
-          ${adminMessage ? `
-          <div style="background: #e3f2fd; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #2196f3;">
-            <h4>Message from Admin:</h4>
-            <p style="margin: 0;">${adminMessage}</p>
-          </div>` : ''}
-
-          <p>${config.action}</p>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${config.buttonUrl}" class="button">${config.buttonText}</a>
-          </div>
-
-          ${isApproved ? `
-          <div style="background: #d4edda; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #28a745;">
-            <h4> Getting Started:</h4>
-            <ul style="margin: 10px 0;">
-              <li>Complete your company profile</li>
-              <li>Post your first job opening</li>
-              <li>Browse and connect with qualified candidates</li>
-              <li>Access our employer tools and analytics</li>
-            </ul>
-          </div>` : ''}
-
-          <p>Best regards,<br>
-          The Global Skills Bridge Admin Team</p>
-        </div>
-        <div class="footer">
-          <p>This is an automated message from Global Skills Bridge.</p>
-          <p>If you have any questions, please contact our support team.</p>
-          <p>&copy; ${new Date().getFullYear()} Global Skills Bridge. All rights reserved.</p>
-        </div>
-      </body>
-      </html>
-    `;
-
-    const text = `
-      ${config.greeting}
-
-      Dear ${employer.contactPerson || employer.companyName},
-
-      ${config.message}
-
-      Company Information:
-      - Company: ${employer.companyName}
-      - Industry: ${employer.industry}
-      - Location: ${employer.location}
-      - Status: ${status}
-      - Application Date: ${new Date(employer.createdAt).toLocaleDateString()}
-
-      ${adminMessage ? `Message from Admin: ${adminMessage}` : ''}
-
-      ${config.action}
-
-      ${config.buttonText}: ${config.buttonUrl}
-
-      Best regards,
-      The Global Skills Bridge Admin Team
-
-      ---
-      This is an automated message from Global Skills Bridge.
-      If you have any questions, please contact our support team.
-      © ${new Date().getFullYear()} Global Skills Bridge. All rights reserved.
-    `;
-
-    return {
-      subject: config.subject,
-      html,
-      text
-    };
-  }
+  
 
   /**
    * Get new employer admin notification template
    */
   getNewEmployerAdminTemplate(employer) {
     const reviewUrl = `${this.baseUrl}/admin/employer-approvals`;
+    // Normalize company info fields for backward compatibility
+    const companyName = employer.companyInfo?.name || employer.companyName || employer.name || 'Company';
+    const contactPerson = employer.companyInfo?.contactPerson || employer.contactPerson || employer.name || companyName;
+    const phone = employer.companyInfo?.phone || employer.phone || 'Not provided';
+    const industry = employer.companyInfo?.industry || employer.industry || 'Not provided';
+    const size = employer.companyInfo?.size || employer.companySize || 'Not provided';
+    const location = employer.companyInfo?.location || employer.location || 'Not provided';
+    const website = employer.companyInfo?.website || employer.website || 'Not provided';
+    const registrationNumber = employer.companyInfo?.registrationNumber || employer.companyRegistration || 'Not provided';
 
     const html = `
       <!DOCTYPE html>
@@ -1073,16 +940,16 @@ class EmailService {
 
           <div class="employer-details">
             <h3>Company Details</h3>
-            <p><strong>Company Name:</strong> ${employer.companyName}</p>
-            <p><strong>Contact Person:</strong> ${employer.contactPerson}</p>
+            <p><strong>Company Name:</strong> ${companyName}</p>
+            <p><strong>Contact Person:</strong> ${contactPerson}</p>
             <p><strong>Email:</strong> ${employer.email}</p>
-            <p><strong>Phone:</strong> ${employer.phone}</p>
-            <p><strong>Industry:</strong> ${employer.industry}</p>
-            <p><strong>Company Size:</strong> ${employer.companySize}</p>
-            <p><strong>Location:</strong> ${employer.location}</p>
-            <p><strong>Website:</strong> ${employer.website || 'Not provided'}</p>
+            <p><strong>Phone:</strong> ${employer.phone || (employer.companyInfo && employer.companyInfo.phone) || 'Not provided'}</p>
+            <p><strong>Industry:</strong> ${industry}</p>
+            <p><strong>Company Size:</strong> ${employer.companyInfo?.size || employer.companySize || 'Not provided'}</p>
+            <p><strong>Location:</strong> ${companyLocation}</p>
+            <p><strong>Website:</strong> ${employer.companyInfo?.website || employer.website || 'Not provided'}</p>
             <p><strong>Registration Date:</strong> ${new Date(employer.createdAt).toLocaleDateString()}</p>
-            <p><strong>Company Registration:</strong> ${employer.companyRegistration || 'Not provided'}</p>
+            <p><strong>Company Registration:</strong> ${employer.companyInfo?.registrationNumber || employer.companyRegistration || 'Not provided'}</p>
             <p><strong>Tax ID:</strong> ${employer.taxId || 'Not provided'}</p>
           </div>
 
@@ -1109,24 +976,24 @@ class EmailService {
     `;
 
     const text = `
-      New Employer Registration - Admin Review Required
+  New Employer Registration - Admin Review Required
 
       Dear Admin,
 
       A new employer has registered and requires approval before they can access the platform.
 
-      Company Details:
-      - Company Name: ${employer.companyName}
-      - Contact Person: ${employer.contactPerson}
-      - Email: ${employer.email}
-      - Phone: ${employer.phone}
-      - Industry: ${employer.industry}
-      - Company Size: ${employer.companySize}
-      - Location: ${employer.location}
-      - Website: ${employer.website || 'Not provided'}
-      - Registration Date: ${new Date(employer.createdAt).toLocaleDateString()}
-      - Company Registration: ${employer.companyRegistration || 'Not provided'}
-      - Tax ID: ${employer.taxId || 'Not provided'}
+  Company Details:
+  - Company Name: ${companyName}
+  - Contact Person: ${contactPerson}
+  - Email: ${employer.email}
+  - Phone: ${phone}
+  - Industry: ${industry}
+  - Company Size: ${size}
+  - Location: ${location}
+  - Website: ${website}
+  - Registration Date: ${new Date(employer.createdAt).toLocaleDateString()}
+  - Company Registration: ${registrationNumber}
+  - Tax ID: ${employer.taxId || 'Not provided'}
 
       Company Description: ${employer.description || 'No description provided'}
 
@@ -1702,7 +1569,7 @@ class EmailService {
         </div>
         <div class="footer">
           <p>This is an automated notification from Global Skills Bridge.</p>
-          <p>If you have questions, please contact us at support@globalskillsbridge.com</p>
+          <p>If you have questions, please contact us at globalskills4@gmail.com</p>
           <p>&copy; ${new Date().getFullYear()} Global Skills Bridge. All rights reserved.</p>
         </div>
       </body>
@@ -1771,7 +1638,7 @@ class EmailService {
 
       ---
       This is an automated notification from Global Skills Bridge.
-      If you have questions, please contact us at support@globalskillsbridge.com
+      If you have questions, please contact us at globalskills4@gmail.com
       © ${new Date().getFullYear()} Global Skills Bridge. All rights reserved.
     `;
 

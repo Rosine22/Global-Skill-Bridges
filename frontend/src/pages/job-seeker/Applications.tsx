@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNotification } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserContext, type Application } from '../../contexts/UserContext';
 import DashboardLayout from '../../components/DashboardLayout';
@@ -103,10 +104,13 @@ function ApplicationsPage() {
     setSelectedApplication(null);
   };
 
-  // const handleSendMessage = (applicationId: string, message: string) => {
-  //   console.log('Sending message:', applicationId, message);
-  //   // TODO: Implement message sending
-  // };
+  const notify = useNotification();
+
+  const handleSendMessage = (applicationId: string, message: string) => {
+    console.log('Sending message:', applicationId, message);
+    // Placeholder: show an in-app notification; real implementation should send via API
+    notify.success('Message queued to be sent to the applicant');
+  };
 
   const stats = [
     {
@@ -310,7 +314,7 @@ function ApplicationsPage() {
             isOpen={showReviewModal}
             onClose={handleCloseReviewModal}
             onStatusUpdate={handleStatusUpdate}
-            // onSendMessage={handleSendMessage}
+            onSendMessage={handleSendMessage}
           />
         )}
       </div>

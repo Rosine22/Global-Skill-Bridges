@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNotification } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserContext, JobApplicationData } from '../../contexts/UserContext';
 import DashboardLayout from '../../components/DashboardLayout';
@@ -8,6 +9,7 @@ import JobApplicationForm from '../../components/JobApplicationForm';
 function JobSeekerDashboard() {
   const { user } = useAuth();
   const { jobs, applications, applyToJob } = useUserContext();
+  const notify = useNotification();
   const [loading] = useState(false);
   const [activeView, setActiveView] = useState<'jobs' | 'applications' | 'interviews' | null>('jobs');
   const [showApplicationForm, setShowApplicationForm] = useState(false);
@@ -32,7 +34,7 @@ function JobSeekerDashboard() {
 
   const handleApply = (jobId: string) => {
     if (!user) {
-      alert('Please login to apply for jobs');
+      notify.info('Please login to apply for jobs');
       return;
     }
 
@@ -49,10 +51,10 @@ function JobSeekerDashboard() {
       applyToJob(selectedJobId, applicationData);
       setShowApplicationForm(false);
       setSelectedJobId(null);
-      alert('Application submitted successfully!');
+      notify.success('Application submitted successfully!');
     } catch (error) {
       console.error('Error submitting application:', error);
-      alert('Failed to submit application. Please try again.');
+      notify.error('Failed to submit application. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

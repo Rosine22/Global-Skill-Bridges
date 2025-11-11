@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNotification } from '../../contexts/NotificationContext';
 import DashboardLayout from '../../components/DashboardLayout';
 import { useUserContext } from '../../contexts/UserContext';
 import { Briefcase, Search, CreditCard as Edit3, Trash2, CheckCircle, XCircle, AlertTriangle, MapPin, Calendar, Users, DollarSign, Building } from 'lucide-react';
 
 function AdminJobManagementPage() {
   const { jobs } = useUserContext();
+  const notify = useNotification();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -19,8 +21,7 @@ function AdminJobManagementPage() {
 
   const handleJobAction = (jobId: string, action: 'approve' | 'reject' | 'suspend' | 'delete') => {
     console.log(`${action} job ${jobId}`);
-    // In a real app, this would make API calls
-    alert(`Job ${action}d successfully!`);
+    notify.success(`Job ${action}d successfully!`);
   };
 
   const getStatusColor = (status: string) => {

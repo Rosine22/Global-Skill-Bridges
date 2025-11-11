@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
-import { Users, Search, Filter, UserCheck, UserX, CreditCard as Edit3, Trash2, Plus, Shield, CheckCircle, AlertCircle } from 'lucide-react';
+import { Users, Search, UserCheck, UserX, CreditCard as Edit3, Trash2, Plus, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface AdminUser {
   id: string;
@@ -19,7 +19,7 @@ function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [showUserForm, setShowUserForm] = useState(false);
+  const [, setShowUserForm] = useState(false);
 
   // Mock users data
   const users: AdminUser[] = [
@@ -137,7 +137,6 @@ function AdminUsersPage() {
   };
 
   const handleUserAction = (userId: string, action: 'activate' | 'suspend' | 'delete' | 'verify') => {
-    // In a real app, this would make API calls
     console.log(`${action} user ${userId}`);
   };
 
