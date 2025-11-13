@@ -63,6 +63,7 @@ const sendTokenResponse = (user, statusCode, res, message = "Success") => {
       message,
       token,
       refreshToken,
+      // Include approval and status fields so frontend can make correct routing decisions
       user: {
         id: user._id,
         name: user.name,
@@ -71,6 +72,10 @@ const sendTokenResponse = (user, statusCode, res, message = "Success") => {
         avatar: user.avatar,
         isEmailVerified: user.isEmailVerified,
         profileCompletion: user.profileCompletion,
+        isApproved: user.isApproved,
+        isActive: user.isActive,
+        isBlocked: user.isBlocked,
+        approvalDate: user.approvalDate,
       },
     });
 };

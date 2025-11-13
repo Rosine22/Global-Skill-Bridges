@@ -1502,9 +1502,17 @@ class EmailService {
           </div>
 
           ${isApproved ? `
+
           <div class="info-box">
             <p style="margin: 0;"><strong>Congratulations!</strong> Your employer account has been approved and is now active.</p>
           </div>
+
+          ${adminNotes ? `
+          <div style="background: #fff3cd; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #ffc107;">
+            <h4 style="margin-top: 0;">Admin Notes:</h4>
+            <p style="margin: 0;">${adminNotes}</p>
+          </div>
+          ` : ''}
 
           <div class="next-steps">
             <h3>Next Steps:</h3>

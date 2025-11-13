@@ -9,7 +9,8 @@
     "server": "node server.js",
     "server:dev": "nodemon server.js",
     "seed": "node scripts/seedDatabase.js",
-    "test": "jest --passWithNoTests"
+  "test": "jest --passWithNoTests",
+  "test:approve-login": "node tests/approve-and-login.js"
   },
   "keywords": [
     "nodejs",

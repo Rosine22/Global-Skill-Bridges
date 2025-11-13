@@ -145,8 +145,8 @@ router.put("/employers/:id/approve", async (req, res) => {
     // Send email notification to employer about approval status change
     try {
       const emailService = new EmailService();
-      // Use the email service method that accepts boolean isApproved and optional notes
-      await emailService.sendEmployerApprovalEmail(employer.toObject ? employer.toObject() : employer, employer.isApproved ? 'approved' : 'rejected', notes || '');
+      // Pass a boolean isApproved along with any admin notes so the template can include the message
+      await emailService.sendEmployerApprovalEmail(employer.toObject ? employer.toObject() : employer, !!employer.isApproved, notes || '');
     } catch (emailErr) {
       console.error('Failed to send employer approval email:', emailErr);
       // Continue without failing the API response

@@ -72,26 +72,28 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 
 function DashboardRouter() {
   const { user } = useAuth();
-  // Type guard for optional employer approvalStatus which isn't part of the core User type
-  function hasApprovalStatus(u: unknown): u is { approvalStatus?: string } {
-    return typeof u === 'object' && u !== null && 'approvalStatus' in u;
-  }
-
-  const approvalStatus = hasApprovalStatus(user) ? (user as { approvalStatus?: string }).approvalStatus : undefined;
+  // Use the boolean isApproved from the backend user object (preferred) to decide routing.
+  // Legacy approvalStatus string is not used in the backend; prefer isApproved.
+  const approvalStatus = (user as unknown as { approvalStatus?: string })?.approvalStatus; // keep for backward compat if present
+  const isApproved = (user as unknown as { isApproved?: boolean })?.isApproved;
   
   if (!user) return <Navigate to="/login" />;
   
-  if (user.role === 'employer') {
-    if (!user.profileCompletion || user.profileCompletion < 100) {
-      return <Navigate to="/employer/onboarding" />;
+    if (user.role === 'employer') {
+      if (!user.profileCompletion || user.profileCompletion < 100) {
+        return <Navigate to="/employer/onboarding" />;
+      }
+
+      // If backend exposes boolean isApproved, use that. If not present but legacy
+      // approvalStatus exists, fall back to it.
+      if (typeof isApproved !== 'undefined') {
+        if (!isApproved) {
+          return <Navigate to="/employer/pending-approval" />;
+        }
+      } else if (approvalStatus === 'pending' || approvalStatus === 'rejected') {
+        return <Navigate to="/employer/pending-approval" />;
+      }
     }
-    if (approvalStatus === 'pending') {
-      return <Navigate to="/employer/pending-approval" />;
-    }
-    if (approvalStatus === 'rejected') {
-      return <Navigate to="/employer/pending-approval" />;
-    }
-  }
   
   switch (user.role) {
     case 'job-seeker':
@@ -354,7 +356,7 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-                            <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
         </Router>

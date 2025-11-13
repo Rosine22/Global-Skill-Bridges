@@ -55,3 +55,30 @@ STYLE_GUIDE.md
 UNIFORM_COLOR_SYSTEM.md
 CONSISTENCY_COMPLETE.md
 COLOR_MIGRATION.md
+
+# ---------------------
+# Additional ignores
+# ---------------------
+
+# Ignore frontend "other files" folder that contains guides/previews
+# Note: path contains a space — escape it so .gitignore matches correctly
+/frontend/other\ files/
+
+# Coverage and test outputs
+coverage/
+tests/__snapshots__/
+
+# Back-end env files and email credential helpers
+backend/.env
+email-setup.env
+
+# Build / output folders
+dist/
+build/
+out/
+
+# Misc caches and lock files
+.cache/
+.parcel-cache/
+package-lock.json
+

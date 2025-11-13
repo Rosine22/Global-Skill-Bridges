@@ -67,6 +67,7 @@ export interface User {
   };
   isEmailVerified: boolean;
   profileCompletion: number;
+  isApproved?: boolean; // employer approval flag returned from backend
   phone?: string;
   location?: string;
   dateOfBirth?: string;
