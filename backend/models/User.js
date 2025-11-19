@@ -117,6 +117,15 @@ const userSchema = new mongoose.Schema(
       description: String,
       registrationNumber: String,
       establishedYear: Number,
+      taxId: String,
+      remotePolicy: {
+        type: String,
+        enum: ["remote", "hybrid", "onsite", "flexible"],
+      },
+      logo: {
+        public_id: String,
+        url: String,
+      },
     },
 
     // Mentor Specific Information

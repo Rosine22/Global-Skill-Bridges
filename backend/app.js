@@ -125,23 +125,27 @@ app.use('/api/', limiter);
 // CORS Configuration
 const corsOptions = {
   origin: function (origin, callback) {
+    // Normalize configured frontend URL to avoid trailing-slash mismatches
+    const rawFront = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = String(rawFront).replace(/\/+$/, '');
+
     // Allow requests from your frontend and other authorized origins
     const allowedOrigins = [
-      process.env.FRONTEND_URL || 'http://localhost:3000',
+      frontendUrl,
       'http://localhost:5173', // Vite dev server
       'http://127.0.0.1:3000',
       'http://127.0.0.1:5173',
-      // Add your production frontend URL here when deployed
-    ];
-    
-    // Allow requests with no origin (mobile apps, Postman, etc.)
+    ].map(o => String(o).replace(/\/+$/, ''));
+
+    // Allow requests with no origin (mobile apps, Postman, server-to-server)
     if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+
+    const normalizedOrigin = String(origin).replace(/\/+$/, '');
+    if (allowedOrigins.includes(normalizedOrigin)) {
+      return callback(null, true);
     }
+
+    return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

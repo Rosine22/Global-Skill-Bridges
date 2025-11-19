@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
+const RtbInvite = require('../models/RtbInvite');
 const { protect, rateLimitByUser } = require("../middleware/auth");
 const EmailService = require("../services/emailService");
 // Import in-app notification helper
@@ -95,7 +96,7 @@ const registerValidation = [
     .withMessage("Password must be at least 6 characters"),
   body("role")
     .optional()
-    .isIn(["job-seeker", "employer", "mentor"])
+    .isIn(["job-seeker", "employer", "mentor", "rtb-admin"])
     .withMessage("Invalid role specified"),
   body("phone")
     .optional()
@@ -182,14 +183,38 @@ router.post("/register", registerValidation, async (req, res, next) => {
     // Add company info for employers
     if (role === "employer" && companyInfo) {
       userData.companyInfo = companyInfo;
-    }
-
-    // Add avatar/logo if provided (base64 or URL)
-    if (avatar) {
-      userData.avatar = {
-        url: avatar,
-        public_id: `avatar_${Date.now()}` // Generate a simple ID
-      };
+      // Copy common company fields to top-level aliases for backward compatibility
+      // and to make sure admin/frontend can easily read them regardless of
+      // whether they expect `companyInfo.*` or top-level fields.
+      const ci = companyInfo || {};
+      if (ci.name) userData.companyName = ci.name;
+      if (ci.registrationNumber) userData.companyRegistration = ci.registrationNumber;
+      if (ci.website) userData.website = ci.website;
+      if (ci.size) userData.companySize = ci.size;
+      if (ci.industry) userData.companyIndustry = ci.industry;
+      if (ci.description) userData.description = ci.description;
+      if (ci.contactPerson) userData.contactPerson = ci.contactPerson;
+      if (ci.taxId) userData.taxId = ci.taxId;
+      // If phone provided at company level and not already set at top-level, copy it
+      if (ci.phone && !userData.phone) userData.phone = ci.phone;
+      
+      // If avatar/logo is provided for employer, save it both as avatar and in companyInfo.logo
+      if (avatar) {
+        const logoData = {
+          url: avatar,
+          public_id: `company_logo_${Date.now()}`
+        };
+        userData.avatar = logoData; // For general avatar display
+        userData.companyInfo.logo = logoData; // For company-specific logo
+      }
+    } else {
+      // For non-employers, just save as avatar
+      if (avatar) {
+        userData.avatar = {
+          url: avatar,
+          public_id: `avatar_${Date.now()}`
+        };
+      }
     }
 
     // Create user
@@ -249,6 +274,81 @@ router.post("/register", registerValidation, async (req, res, next) => {
     }
 
     sendTokenResponse(user, 201, res, "User registered successfully");
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @route   POST /api/auth/verify-email
+// @desc    Verify user's email using token sent by email
+// @access  Public
+// @route   GET /api/auth/verify-email
+// @desc    Verify user's email via one-click link and redirect to frontend
+// @access  Public
+router.get('/verify-email', async (req, res, next) => {
+  try {
+    // Accept token/email from query params (supports either 'token' or 'verifyToken')
+    const token = req.query.token || req.query.verifyToken;
+    const email = (req.query.email || '').toLowerCase();
+    const postLoginRedirect = req.query.postLoginRedirect || '';
+
+    if (!token || !email) {
+      // Redirect to frontend login with an error flag if missing
+      const frontend = process.env.FRONTEND_URL || 'https://global-skills-br.netlify.app';
+      const frontendBase = String(frontend).replace(/\/+$/, '');
+      const redirectUrl = `${frontendBase}/login?verified=false`;
+      return res.redirect(302, redirectUrl);
+    }
+
+    // Find user by email and token
+    const user = await User.findOne({ email: email, emailVerificationToken: token });
+
+    if (!user) {
+      const frontend = process.env.FRONTEND_URL || 'https://global-skills-br.netlify.app';
+      const frontendBase = String(frontend).replace(/\/+$/, '');
+      const redirectUrl = `${frontendBase}/login?verified=false`;
+      return res.redirect(302, redirectUrl);
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerificationToken = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    const frontend = process.env.FRONTEND_URL || 'https://global-skills-br.netlify.app';
+    const frontendBase = String(frontend).replace(/\/+$/, '');
+    const redirectUrl = `${frontendBase}/login?verified=true&email=${encodeURIComponent(email)}${postLoginRedirect ? `&postLoginRedirect=${encodeURIComponent(postLoginRedirect)}` : ''}`;
+
+    return res.redirect(302, redirectUrl);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/verify-email', async (req, res, next) => {
+  try {
+    // Accept token/email from body or query, and accept either 'token' or 'verifyToken'
+    const token = req.body.token || req.body.verifyToken || req.query.token || req.query.verifyToken;
+    const email = (req.body.email || req.query.email || '').toLowerCase();
+
+    if (!token || !email) {
+      return res.status(400).json({ success: false, message: 'Token and email are required' });
+    }
+
+    // Helpful debug log when tokens fail in dev — safe to remove later
+    console.debug(`verify-email called for ${email} with token: ${token}`);
+
+    // Find user by email and token
+    const user = await User.findOne({ email: email, emailVerificationToken: token });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired verification token' });
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerificationToken = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    return res.status(200).json({ success: true, message: 'Email verified successfully' });
   } catch (error) {
     next(error);
   }
@@ -356,6 +456,111 @@ router.post("/login", loginValidation, async (req, res, next) => {
     await user.save();
 
     sendTokenResponse(user, 200, res, "Login successful");
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @route POST /api/auth/rtb/request-code
+ * @desc  Request a one-time code to sign in as RTB admin (sends code to email)
+ * @access Public
+ */
+router.post('/rtb/request-code', async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    // Generate 6-digit numeric code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Hash code before saving
+    const tokenHash = crypto.createHash('sha256').update(code).digest('hex');
+    const expireMinutes = parseInt(process.env.RTB_CODE_EXPIRE_MINUTES || '60', 10);
+    const expiresAt = new Date(Date.now() + expireMinutes * 60 * 1000); // configurable minutes
+
+    // Invalidate previous invites for this email
+    await RtbInvite.updateMany({ email: email.toLowerCase(), used: false }, { used: true });
+
+    // Save invite
+    await RtbInvite.create({ email: email.toLowerCase(), tokenHash, expiresAt });
+
+    // Send email with code
+    const emailResult = await emailService.sendRtbInviteCodeEmail(email, code);
+
+    if (!emailResult.success) {
+      console.error('Failed to send RTB invite code:', emailResult.error);
+      return res.status(500).json({ success: false, message: 'Failed to send code' });
+    }
+
+    return res.status(200).json({ success: true, message: 'Sign-in code sent to email' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @route POST /api/auth/rtb/verify-code
+ * @desc  Verify code and create/login rtb-admin user
+ * @access Public
+ */
+router.post('/rtb/verify-code', async (req, res, next) => {
+  try {
+    const { email, code, name } = req.body;
+    if (!email || !code) {
+      return res.status(400).json({ success: false, message: 'Email and code are required' });
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(String(code)).digest('hex');
+
+    // Find invite
+    const invite = await RtbInvite.findOne({ email: email.toLowerCase(), tokenHash, used: false, expiresAt: { $gt: new Date() } });
+    if (!invite) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired code' });
+    }
+
+    // Mark invite used
+    invite.used = true;
+    await invite.save();
+
+    // Find existing user
+    let user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+
+    if (user) {
+      // If user exists but is not rtb-admin, deny (to avoid role hijacking)
+      if (user.role !== 'rtb-admin' && user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'This email is already registered with a different role' });
+      }
+
+      // Ensure email verified and approved
+      user.isEmailVerified = true;
+      user.isApproved = true;
+      await user.save();
+
+      // Send tokens
+      return sendTokenResponse(user, 200, res, 'Login successful');
+    }
+
+    // Create new rtb-admin user
+    const randomPassword = crypto.randomBytes(12).toString('hex');
+    const hashed = await bcrypt.hash(randomPassword, 10);
+
+    const newUser = await User.create({
+      name: name || email.split('@')[0],
+      email: email.toLowerCase(),
+      password: hashed,
+      role: 'rtb-admin',
+      isEmailVerified: true,
+      isActive: true,
+      isBlocked: false,
+      isApproved: true,
+      profileCompletion: 100,
+    });
+
+    // Immediately login the new user
+    return sendTokenResponse(newUser, 201, res, 'RTB admin account created and logged in');
   } catch (error) {
     next(error);
   }

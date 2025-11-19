@@ -118,12 +118,14 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  requestRtbCode: (email: string) => Promise<{ success: boolean; message?: string }>;
+  verifyRtbCode: (email: string, code: string, name?: string) => Promise<{ success: boolean; message?: string }>;
   register: (userData: RegisterData) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<{ success: boolean; message: string }>;
   resetPassword: (token: string, password: string, confirmPassword: string) => Promise<{ success: boolean; message: string }>;
   changePassword: (currentPassword: string, newPassword: string, confirmPassword: string) => Promise<{ success: boolean; message: string }>;
-  verifyEmail: (token: string) => Promise<{ success: boolean; message: string }>;
+  verifyEmail: (token: string, email?: string) => Promise<{ success: boolean; message?: string }>;
   updateProfile: (data: ProfileUpdateData) => Promise<{ success: boolean; message: string; user?: User }>;
   refreshAuthToken: () => Promise<boolean>;
   getCurrentUser: () => Promise<void>;
@@ -233,6 +235,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setError(data.message || 'Registration failed');
         return { success: false, message: data.message || 'Registration failed' };
+      }
+    } catch {
+      const message = 'Network error. Please check your connection.';
+      setError(message);
+      return { success: false, message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const requestRtbCode = async (email: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH}/rtb/request-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        return { success: true, message: data.message };
+      } else {
+        setError(data.message || 'Failed to send code');
+        return { success: false, message: data.message || 'Failed to send code' };
+      }
+    } catch {
+      const message = 'Network error. Please check your connection.';
+      setError(message);
+      return { success: false, message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyRtbCode = async (email: string, code: string, name?: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH}/rtb/verify-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, code, name }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        if (data.token && data.refreshToken && data.user) {
+          saveAuthData(data.token, data.refreshToken, data.user);
+        }
+        return { success: true, message: data.message };
+      } else {
+        setError(data.message || 'Verification failed');
+        return { success: false, message: data.message || 'Verification failed' };
       }
     } catch {
       const message = 'Network error. Please check your connection.';
@@ -431,16 +492,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const verifyEmail = async (verificationToken: string): Promise<{ success: boolean; message: string }> => {
+  const verifyEmail = async (verificationToken: string, email?: string): Promise<{ success: boolean; message: string }> => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH}/verify-email/${verificationToken}`, {
+      const body: { token: string; email?: string } = { token: verificationToken };
+      if (email) body.email = email;
+
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH}/verify-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
@@ -551,6 +617,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     error,
     login,
+    requestRtbCode,
+    verifyRtbCode,
     register,
     logout,
     forgotPassword,

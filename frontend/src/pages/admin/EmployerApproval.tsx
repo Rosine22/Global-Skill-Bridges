@@ -26,8 +26,16 @@ type BackendEmployer = {
   role: string;
   isApproved: boolean;
   isActive: boolean;
+  isEmailVerified?: boolean;
+  profileCompletion?: number;
   createdAt: string;
   updatedAt?: string;
+  approvalDate?: string;
+  approvedBy?: {
+    _id: string;
+    name?: string;
+    email?: string;
+  };
   avatar?: {
     url?: string;
     public_id?: string;
@@ -40,13 +48,27 @@ type BackendEmployer = {
     description?: string;
     registrationNumber?: string;
     establishedYear?: number;
+    taxId?: string;
+    remotePolicy?: string;
+    logo?: {
+      url?: string;
+      public_id?: string;
+    };
   };
   location?: {
     city?: string;
     country?: string;
     address?: string;
   };
-  adminNotes?: Array<{ note: string; addedAt: string; addedBy: string }>;
+  adminNotes?: Array<{ 
+    note: string; 
+    addedAt: string; 
+    addedBy: string | { _id: string; name?: string; email?: string };
+  }>;
+  stats?: {
+    jobsPosted?: number;
+    profileViews?: number;
+  };
 };
 
 function AdminEmployerApproval() {
@@ -87,19 +109,33 @@ function AdminEmployerApproval() {
 
       const headers = getAuthHeaders();
 
+      // Fetch pending employers
       const pendingRes = await fetch(getApiUrl(`${API_ENDPOINTS.ADMIN}/employers/pending`), { headers });
-      if (!pendingRes.ok) throw new Error('Failed to load pending employers');
+      if (!pendingRes.ok) {
+        const errorText = await pendingRes.text();
+        throw new Error(`Failed to load pending employers: ${errorText}`);
+      }
       const pendingJson = await pendingRes.json();
+      console.log('Pending employers response:', pendingJson);
       setPendingEmployers(pendingJson.data || []);
 
+      // Fetch approved employers
       const approvedRes = await fetch(getApiUrl(`${API_ENDPOINTS.ADMIN}/employers?isApproved=true`), { headers });
-      if (!approvedRes.ok) throw new Error('Failed to load approved employers');
+      if (!approvedRes.ok) {
+        const errorText = await approvedRes.text();
+        throw new Error(`Failed to load approved employers: ${errorText}`);
+      }
       const approvedJson = await approvedRes.json();
+      console.log('Approved employers response:', approvedJson);
       setApprovedEmployers(approvedJson.data || []);
+
+      // Log summary
+      console.log(`Successfully loaded ${pendingJson.data?.length || 0} pending and ${approvedJson.data?.length || 0} approved employers`);
     } catch (e: unknown) {
       console.error('Error fetching employers', e);
       const msg = e instanceof Error ? e.message : 'Failed to load employers';
       setError(msg);
+      notify.error(msg);
     } finally {
       setLoading(false);
     }
@@ -362,11 +398,17 @@ function AdminEmployerApproval() {
                   {/* Logo and Company Name */}
                   <div className="flex items-start mb-4">
                     <div className="h-14 w-14 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold border-2 border-gray-200 flex-shrink-0 overflow-hidden">
-                      {employer.avatar?.url ? (
+                      {(employer.companyInfo?.logo?.url || employer.avatar?.url) ? (
                         <img 
-                          src={employer.avatar.url} 
+                          src={employer.companyInfo?.logo?.url || employer.avatar?.url} 
                           alt={employer.companyInfo?.name || 'Company logo'} 
                           className="h-full w-full object-cover"
+                          onError={(e) => {
+                            // Fallback to initials if image fails to load
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.parentElement!.textContent = (employer.companyInfo?.name || 'E')[0]?.toUpperCase();
+                          }}
                         />
                       ) : (
                         (employer.companyInfo?.name || 'E')[0]?.toUpperCase()
@@ -394,14 +436,42 @@ function AdminEmployerApproval() {
                       <Building2 className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
                       <span className="truncate">{employer.companyInfo?.size || 'Size not set'}</span>
                     </div>
+                    {employer.phone && (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <span className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0">📞</span>
+                        <span className="truncate">{employer.phone}</span>
+                      </div>
+                    )}
+                    {employer.companyInfo?.website && (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <span className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0">🌐</span>
+                        <span className="truncate">{employer.companyInfo.website}</span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Status Badge */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    {getStatusBadge(activeTab)}
-                    <button className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center">
-                      View Details
-                    </button>
+                  {/* Status Badge and Additional Info */}
+                  <div className="pt-4 border-t border-gray-100 space-y-2">
+                    <div className="flex items-center justify-between">
+                      {getStatusBadge(activeTab)}
+                      <button className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center">
+                        View Details
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>Applied: {formatDate(employer.createdAt)}</span>
+                      {employer.isEmailVerified && (
+                        <span className="text-green-600 font-medium">✓ Email Verified</span>
+                      )}
+                    </div>
+                    {employer.profileCompletion !== undefined && (
+                      <div className="w-full bg-gray-200 rounded-full h-1.5">
+                        <div 
+                          className="bg-blue-600 h-1.5 rounded-full transition-all duration-300" 
+                          style={{ width: `${employer.profileCompletion}%` }}
+                        ></div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -418,11 +488,17 @@ function AdminEmployerApproval() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="h-16 w-16 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold border-2 border-gray-200 shadow-sm overflow-hidden">
-                    {selectedEmployer.avatar?.url ? (
+                    {(selectedEmployer.companyInfo?.logo?.url || selectedEmployer.avatar?.url) ? (
                       <img 
-                        src={selectedEmployer.avatar.url} 
+                        src={selectedEmployer.companyInfo?.logo?.url || selectedEmployer.avatar?.url} 
                         alt={selectedEmployer.companyInfo?.name || 'Company logo'} 
                         className="h-full w-full object-cover"
+                        onError={(e) => {
+                          // Fallback to initials if image fails to load
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.parentElement!.textContent = (selectedEmployer.companyInfo?.name || 'E')[0]?.toUpperCase();
+                        }}
                       />
                     ) : (
                       (selectedEmployer.companyInfo?.name || 'E')[0]?.toUpperCase()
@@ -522,14 +598,57 @@ function AdminEmployerApproval() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Tax ID</label>
-                    <p className="mt-1 text-sm text-gray-900">{/* Not tracked in backend user model by default */}Not set</p>
+                    <p className="mt-1 text-sm text-gray-900">{selectedEmployer.companyInfo?.taxId || 'Not set'}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Remote Policy</label>
-                    <p className="mt-1 text-sm text-gray-900 capitalize">Not set</p>
+                    <p className="mt-1 text-sm text-gray-900 capitalize">{selectedEmployer.companyInfo?.remotePolicy || 'Not set'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Email Verified</label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        selectedEmployer.isEmailVerified 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {selectedEmployer.isEmailVerified ? '✓ Verified' : '✗ Not Verified'}
+                      </span>
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Profile Completion</label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                            style={{ width: `${selectedEmployer.profileCompletion || 0}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-xs font-medium">{selectedEmployer.profileCompletion || 0}%</span>
+                      </div>
+                    </p>
                   </div>
                 </div>
               </div>
+
+              {/* Admin Notes */}
+              {selectedEmployer.adminNotes && selectedEmployer.adminNotes.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Admin Notes</h3>
+                  <div className="space-y-3">
+                    {selectedEmployer.adminNotes.map((note, index) => (
+                      <div key={index} className="bg-gray-50 rounded-lg p-4 border">
+                        <p className="text-sm text-gray-900 mb-2">{note.note}</p>
+                        <p className="text-xs text-gray-500">
+                          Added on {formatDate(note.addedAt)} by {note.addedBy}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Application Status and Actions */}
               <div className="border-t pt-6">
@@ -539,14 +658,26 @@ function AdminEmployerApproval() {
                       <span className="text-sm font-medium text-gray-700">Status:</span>
                       {getStatusBadge(pendingEmployers.find(e => e._id === selectedEmployer._id) ? 'pending' : 'approved')}
                     </div>
-                    <p className="text-sm text-gray-600">
-                      Applied on: {formatDate(selectedEmployer.createdAt)}
-                    </p>
-                    {selectedEmployer.updatedAt && selectedEmployer.updatedAt !== selectedEmployer.createdAt && (
+                    <div className="space-y-1">
                       <p className="text-sm text-gray-600">
-                        Last updated: {formatDate(selectedEmployer.updatedAt)}
+                        Applied on: {formatDate(selectedEmployer.createdAt)}
                       </p>
-                    )}
+                      {selectedEmployer.updatedAt && selectedEmployer.updatedAt !== selectedEmployer.createdAt && (
+                        <p className="text-sm text-gray-600">
+                          Last updated: {formatDate(selectedEmployer.updatedAt)}
+                        </p>
+                      )}
+                      {selectedEmployer.approvalDate && (
+                        <p className="text-sm text-green-600 font-medium">
+                          Approved on: {formatDate(selectedEmployer.approvalDate)}
+                        </p>
+                      )}
+                      {selectedEmployer.approvedBy && (
+                        <p className="text-sm text-gray-600">
+                          Approved by: {selectedEmployer.approvedBy.name || selectedEmployer.approvedBy.email}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   
                   {pendingEmployers.find(e => e._id === selectedEmployer._id) && (

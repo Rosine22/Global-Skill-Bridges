@@ -9,8 +9,11 @@
     "server": "node server.js",
     "server:dev": "nodemon server.js",
     "seed": "node scripts/seedDatabase.js",
-  "test": "jest --passWithNoTests",
-  "test:approve-login": "node tests/approve-and-login.js"
+    "test": "jest --passWithNoTests",
+    "test:approve-login": "node tests/approve-and-login.js",
+    "setup:rtb": "node setup-rtb.js",
+    "create:rtb-admin": "node create-rtb-admin.js",
+    "test:rtb-login": "node test-rtb-login.js"
   },
   "keywords": [
     "nodejs",

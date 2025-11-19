@@ -6,7 +6,7 @@
  
  **GitHub Repository:** [https://github.com/Rosine22/Global-Skill-Bridges]  
  **Figma design:** [https://www.figma.com/design/SXmOiQP0Vn2YJKQ5gqhW6v/Global-Skills_Bridge?node-id=15-2&p=f&t=ZM92dghfNyBYXCGf-0]    
- **Deployed link:** [https://global-skill-bridges-git-2fd38f-uwinezarosine16-2552s-projects.vercel.app/]
+ **Deployed link:** [https://global-skills-br.netlify.app/]
  
 
 ---

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Globe, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -8,8 +8,9 @@ function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, verifyEmail } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +21,37 @@ function LoginPage() {
       const result = await login(email, password);
       
       if (result.success) {
-        navigate('/dashboard');
+        // If the login was triggered via email verification link, the
+        // frontend may have query params `verifyToken`, `email`, and
+        // `postLoginRedirect`. If verifyToken exists, call verifyEmail
+        // to complete verification server-side, then redirect.
+        const params = new URLSearchParams(location.search);
+        const verifyToken = params.get('verifyToken');
+        const verifyEmailParam = params.get('email') || undefined;
+        const postLoginRedirect = params.get('postLoginRedirect');
+
+        if (verifyToken) {
+          try {
+            await verifyEmail(verifyToken, verifyEmailParam);
+          } catch (err) {
+            // ignore verification errors here; user can still proceed
+            console.error('Email verification after login failed:', err);
+          }
+        }
+
+        // Determine redirect: prefer postLoginRedirect, else employer dashboard
+        // for approved employers, otherwise general dashboard.
+        const storedUser = localStorage.getItem('user');
+        const currentUser = storedUser ? JSON.parse(storedUser) : null;
+
+        if (postLoginRedirect) {
+          navigate(postLoginRedirect);
+        } else if (currentUser && currentUser.role === 'employer') {
+          // Admin-approved employers should be able to access employer dashboard
+          navigate('/employer/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         setError(result.message || 'Invalid email or password');
       }

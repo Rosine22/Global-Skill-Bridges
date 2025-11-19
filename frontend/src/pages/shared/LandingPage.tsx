@@ -145,6 +145,13 @@ function LandingPage() {
                         Admin Approvals
                       </Link>
                       <Link
+                        to="/rtb/login"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        RTB Login
+                      </Link>
+                      <Link
                         to="/login"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                         onClick={() => setIsDropdownOpen(false)}

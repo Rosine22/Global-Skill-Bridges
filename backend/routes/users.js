@@ -172,6 +172,21 @@ router.put('/profile', [
       }
     });
 
+    // If companyInfo is being updated, also copy commonly-used top-level aliases
+    // so admin endpoints and older templates can reliably read the fields.
+    if (updates.companyInfo) {
+      const ci = updates.companyInfo || {};
+      if (ci.name) updates.companyName = ci.name;
+      if (ci.registrationNumber) updates.companyRegistration = ci.registrationNumber;
+      if (ci.website) updates.website = ci.website;
+      if (ci.size) updates.companySize = ci.size;
+      if (ci.industry) updates.companyIndustry = ci.industry;
+      if (ci.description) updates.description = ci.description;
+      if (ci.contactPerson) updates.contactPerson = ci.contactPerson;
+      if (ci.taxId) updates.taxId = ci.taxId;
+      if (ci.phone && !updates.phone) updates.phone = ci.phone;
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
       updates,

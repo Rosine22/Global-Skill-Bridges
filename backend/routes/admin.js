@@ -12,6 +12,42 @@ const router = express.Router();
 router.use(protect);
 router.use(authorize('admin', 'rtb-admin'));
 
+// Helper to normalize/merge employer company fields so admin UI can read a
+// consistent shape regardless of whether data is stored under `companyInfo`
+// or as top-level aliases (companyName, companyRegistration, etc.).
+function mergeEmployerDetails(employer) {
+  // employer may be a Mongoose doc or a plain object
+  const e = employer && employer.toObject ? employer.toObject() : (employer || {});
+
+  const ci = e.companyInfo || {};
+
+  const merged = {
+    id: e._id,
+    name: e.name || ci.contactPerson || ci.name || e.companyName || 'Unknown',
+    email: e.email,
+    phone: e.phone || ci.phone || null,
+    companyName: ci.name || e.companyName || null,
+    companyRegistration: ci.registrationNumber || e.companyRegistration || null,
+    companyIndustry: ci.industry || e.companyIndustry || null,
+    companySize: ci.size || e.companySize || null,
+    website: ci.website || e.website || null,
+    description: ci.description || e.description || null,
+    logo: (ci.logo && ci.logo.url) || (e.companyInfo && e.companyInfo.logo && e.companyInfo.logo.url) || (e.avatar && e.avatar.url) || null,
+    taxId: ci.taxId || e.taxId || null,
+    contactPerson: ci.contactPerson || e.contactPerson || null,
+    location: e.location || ci.location || null,
+    isEmailVerified: e.isEmailVerified,
+    isApproved: e.isApproved,
+    approvalDate: e.approvalDate || null,
+    approvedBy: e.approvedBy || null,
+    adminNotes: e.adminNotes || [],
+    createdAt: e.createdAt || null,
+    profileCompletion: e.profileCompletion || 0,
+  };
+
+  return merged;
+}
+
 // ✅ Get pending employers (for admin approval)
 router.get("/employers/pending", async (req, res) => {
   try {
@@ -20,19 +56,39 @@ router.get("/employers/pending", async (req, res) => {
       isApproved: false,
       isActive: true,
     })
-      .select("-password") // ✅ FIXED: exclude only password
-      .sort({ createdAt: -1 });
+      .select("-password -resetPasswordToken -resetPasswordExpire -emailVerificationToken") // Exclude sensitive fields only
+      .populate('approvedBy', 'name email')
+      .sort({ createdAt: -1 })
+      .lean(); // Use lean() for better performance
+
+    console.log(`Found ${pendingEmployers.length} pending employers`);
+
+    // Normalize employer details for consistent admin consumption
+    const normalized = pendingEmployers.map((emp) => {
+      const merged = mergeEmployerDetails(emp);
+      // attach merged profile but keep original data for debugging if needed
+      return {
+        ...emp,
+        employerProfile: merged,
+      };
+    });
+
+    // Log a sample normalized employer for debugging
+    if (normalized.length > 0) {
+      console.log('Sample normalized pending employer:', normalized[0].employerProfile);
+    }
 
     res.status(200).json({
       success: true,
-      data: pendingEmployers,
+      data: normalized,
+      count: normalized.length,
     });
   } catch (error) {
     console.error("Error fetching pending employers:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch pending employers",
-      error,
+      error: error.message,
     });
   }
 });
@@ -41,11 +97,11 @@ router.get("/employers/pending", async (req, res) => {
 router.get("/employers", async (req, res) => {
   try {
     // Support both `status=approved|pending` and `isApproved=true|false` (frontend may use either)
-    const { page = 1, limit = 10, status, isApproved } = req.query;
+    const { page = 1, limit = 50, status, isApproved } = req.query; // Increased default limit
     const skip = (page - 1) * limit;
 
     // filter by approval status if provided
-    const filter = { role: "employer" };
+    const filter = { role: "employer", isActive: true }; // Only active employers
     if (status === "approved") filter.isApproved = true;
     if (status === "pending") filter.isApproved = false;
     if (typeof isApproved !== 'undefined') {
@@ -54,16 +110,30 @@ router.get("/employers", async (req, res) => {
     }
 
     const employers = await User.find(filter)
-      .select("-password") // ✅ FIXED: exclude only password
+      .select("-password -resetPasswordToken -resetPasswordExpire -emailVerificationToken") // Exclude sensitive fields only
+      .populate('approvedBy', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
+      .lean(); // Use lean() for better performance
 
     const totalEmployers = await User.countDocuments(filter);
 
+    console.log(`Found ${employers.length} employers with filter:`, filter);
+
+    // Normalize each employer and include `employerProfile` for consistent frontend display
+    const normalized = employers.map(emp => ({
+      ...emp,
+      employerProfile: mergeEmployerDetails(emp)
+    }));
+
+    if (normalized.length > 0) {
+      console.log('Sample normalized employer:', normalized[0].employerProfile);
+    }
+
     res.status(200).json({
       success: true,
-      data: employers,
+      data: normalized,
       pagination: {
         currentPage: parseInt(page),
         totalPages: Math.ceil(totalEmployers / limit),
@@ -75,7 +145,7 @@ router.get("/employers", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch employers",
-      error,
+      error: error.message,
     });
   }
 });
@@ -98,6 +168,43 @@ router.get("/applications", async (req, res) => {
       success: false,
       message: "Failed to fetch applications",
       error,
+    });
+  }
+});
+
+// ✅ Get specific employer by ID
+router.get("/employers/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const employer = await User.findOne({ _id: id, role: "employer" })
+      .select("-password -resetPasswordToken -resetPasswordExpire -emailVerificationToken")
+      .populate('approvedBy', 'name email');
+    
+    if (!employer) {
+      return res.status(404).json({
+        success: false,
+        message: "Employer not found",
+      });
+    }
+
+    console.log(`Retrieved employer details for ID: ${id}`);
+
+    const normalized = mergeEmployerDetails(employer);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        ...employer,
+        employerProfile: normalized,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching employer details:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch employer details",
+      error: error.message,
     });
   }
 });
@@ -159,10 +266,16 @@ router.put("/employers/:id/approve", async (req, res) => {
       console.error('Failed to create in-app notification for employer:', notifErr);
     }
 
+    // Respond with normalized employer profile as well
+    const normalizedProfile = mergeEmployerDetails(employer);
+
     res.status(200).json({
       success: true,
       message: approve ? "Employer approved successfully" : "Employer rejected",
-      data: employer,
+      data: {
+        ...employer.toObject ? employer.toObject() : employer,
+        employerProfile: normalizedProfile,
+      },
     });
   } catch (error) {
     console.error("Error updating employer approval:", error);

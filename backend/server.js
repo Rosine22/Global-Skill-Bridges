@@ -48,7 +48,7 @@ app.use("/api/", limiter);
 // Default FRONTEND_URL fallback uses the deployed Vercel frontend so links and CORS
 // allow the production frontend by default when environment variables are not set.
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "https://global-skill-bridges-git-2fd38f-uwinezarosine16-2552s-projects.vercel.app",
+  origin: process.env.FRONTEND_URL || "https://global-skills-br.netlify.app/",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],

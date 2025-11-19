@@ -30,7 +30,9 @@ class EmailService {
     }
 
   // Use deployed frontend URL as the default fallback so emails/links point to production
-  this.baseUrl = process.env.FRONTEND_URL || process.env.CLIENT_BASE_URL || 'https://global-skill-bridges-git-2fd38f-uwinezarosine16-2552s-projects.vercel.app';
+  // Normalize to remove any trailing slash so templates build correct links
+  const rawBaseUrl = process.env.FRONTEND_URL || process.env.CLIENT_BASE_URL || 'https://global-skills-br.netlify.app';
+  this.baseUrl = String(rawBaseUrl).replace(/\/+$/, '');
   }
 
   /**
@@ -135,7 +137,15 @@ class EmailService {
    */
   async sendEmailVerificationEmail(email, verificationToken, user) {
     try {
-      const verificationUrl = `${this.baseUrl}/verify-email/${verificationToken}`;
+      // Direct user to the frontend login page with token+email params so they
+      // must sign in first; frontend can then call the API to complete
+      // verification and continue employer onboarding. Include a post-login
+      // redirect that frontend can use to send the user to employer onboarding.
+      // Build a one-click verification URL that hits the backend endpoint,
+      // which will verify the token and then redirect the user to the frontend.
+      const rawBackend = process.env.BACKEND_URL || process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
+      const backendBase = String(rawBackend).replace(/\/+$/, '');
+      const verificationUrl = `${backendBase}/api/auth/verify-email?verifyToken=${verificationToken}&email=${encodeURIComponent(email)}&postLoginRedirect=/employer/onboard`;
       const templates = this.getEmailVerificationTemplate(email, verificationUrl, user);
       
       const mailOptions = {
@@ -151,6 +161,41 @@ class EmailService {
       return { success: true, messageId: info.messageId };
     } catch (error) {
       console.error('Error sending verification email:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Send RTB invite code (one-time numeric code)
+   */
+  async sendRtbInviteCodeEmail(email, code) {
+    try {
+      const subject = 'Your RTB sign-in code';
+      const html = `
+        <div style="font-family: Arial, sans-serif; line-height:1.5; color:#333; max-width:600px; margin:0 auto;">
+          <h2>Global Skills Bridge — RTB Sign-in Code</h2>
+          <p>Your one-time sign-in code for RTB access is:</p>
+          <div style="font-size:22px; font-weight:700; background:#f4f4f4; padding:16px; border-radius:6px; display:inline-block;">${code}</div>
+          <p>This code will expire in 15 minutes. If you did not request this, please ignore this email.</p>
+          <p>— Global Skills Bridge</p>
+        </div>
+      `;
+
+      const text = `Your RTB sign-in code is: ${code}. It expires in 15 minutes.`;
+
+      const mailOptions = {
+        from: `"Global Skills Bridge" <${process.env.FROM_EMAIL || 'globalskills4@gmail.com'}>`,
+        to: email,
+        subject,
+        html,
+        text,
+      };
+
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log('RTB invite code email sent:', info.messageId);
+      return { success: true, messageId: info.messageId };
+    } catch (error) {
+      console.error('Error sending RTB invite code email:', error);
       return { success: false, error: error.message };
     }
   }
@@ -636,7 +681,9 @@ class EmailService {
    * Get email template for email verification
    */
   getEmailVerificationTemplate(email, verificationUrl, user) {
-    const dashboardUrl = `${this.baseUrl}/dashboard`;
+    // For verification emails we want the dashboard link to point to the site root
+    // so users land at the main app after verifying.
+    const dashboardUrl = `${this.baseUrl}`;
     const userName = user ? user.name : email.split('@')[0];
 
     const html = `
@@ -946,7 +993,7 @@ class EmailService {
             <p><strong>Phone:</strong> ${employer.phone || (employer.companyInfo && employer.companyInfo.phone) || 'Not provided'}</p>
             <p><strong>Industry:</strong> ${industry}</p>
             <p><strong>Company Size:</strong> ${employer.companyInfo?.size || employer.companySize || 'Not provided'}</p>
-            <p><strong>Location:</strong> ${companyLocation}</p>
+            <p><strong>Location:</strong> ${location}</p>
             <p><strong>Website:</strong> ${employer.companyInfo?.website || employer.website || 'Not provided'}</p>
             <p><strong>Registration Date:</strong> ${new Date(employer.createdAt).toLocaleDateString()}</p>
             <p><strong>Company Registration:</strong> ${employer.companyInfo?.registrationNumber || employer.companyRegistration || 'Not provided'}</p>

@@ -51,6 +51,7 @@ import RTBAnalyticsPage from './pages/rtb/AnalyticsPage';
 import RTBSkillsGapPage from './pages/rtb/SkillsGapPage';
 import RTBProgramsPage from './pages/rtb/ProgramsPage';
 import RTBReportsPage from './pages/rtb/ReportsPage';
+import RTBLoginPage from './pages/rtb/LoginPage';
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
@@ -256,6 +257,7 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+              <Route path="/rtb/login" element={<RTBLoginPage />} />
               
               <Route 
                 path="/rtb/skills-gap" 

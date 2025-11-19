@@ -6,7 +6,7 @@ const swaggerDefinition = {
     title: 'Global Skills Bridge API',
     version: '1.0.0',
     description:
-      'Comprehensive API documentation for Global Skills Bridge - A TVET job matching and skills development platform. \n\n👉 Visit the [Dashboard](https://global-skill-bridges-git-2fd38f-uwinezarosine16-2552s-projects.vercel.app/) for the web interface.',
+      'Comprehensive API documentation for Global Skills Bridge - A TVET job matching and skills development platform. \n\n👉 Visit the [Dashboard](https://global-skills-br.netlify.app/) for the web interface.',
     contact: {
       name: 'Global Skills Bridge Team',
       email: 'support@globalskillsbridge.com',
@@ -27,7 +27,7 @@ const swaggerDefinition = {
       description: 'Production Server',
     },
     {
-      url: 'https://global-skill-bridges-git-2fd38f-uwinezarosine16-2552s-projects.vercel.app/',
+      url: 'https://global-skills-br.netlify.app/',
       description: 'Dashboard (Frontend App)',
     },
   ],

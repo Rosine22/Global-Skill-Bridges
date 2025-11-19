@@ -60,7 +60,6 @@ function RegisterPage() {
     'job-seeker': 'TVET Graduate looking for global employment opportunities',
     'employer': 'Company or organization seeking qualified candidates',
     'mentor': 'Industry expert providing guidance and mentorship',
-    'rtb-admin': 'RTB official tracking graduate outcomes and program effectiveness'
   };
 
   return (
@@ -101,7 +100,6 @@ function RegisterPage() {
                 <option value="job-seeker">Job Seeker (TVET Graduate)</option>
                 <option value="employer">Employer</option>
                 <option value="mentor">Mentor</option>
-                <option value="rtb-admin">RTB Administrator</option>
               </select>
               <p className="mt-1 text-xs text-gray-500">
                 {roleDescriptions[formData.role]}

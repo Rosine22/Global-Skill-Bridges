@@ -18,7 +18,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 
 // Default to the deployed frontend/backend base you provided; allow overriding via TEST_API_BASE or API_BASE_URL
-const API_BASE = process.env.TEST_API_BASE || process.env.API_BASE_URL || 'https://global-skill-bridges-git-2fd38f-uwinezarosine16-2552s-projects.vercel.app';
+const API_BASE = process.env.TEST_API_BASE || process.env.API_BASE_URL || 'https://global-skills-br.netlify.app/';
 
 async function connectDB() {
   const mongoURI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/Global-skills';
@@ -36,18 +36,18 @@ async function main() {
     process.exit(1);
   }
 
-  // Test accounts
-  const adminCreds = { email: process.env.TEST_ADMIN_EMAIL || 'admin@gsb.com', password: process.env.TEST_ADMIN_PASSWORD || 'Admin@GSB2024' };
-  const employerData = {
-    name: 'Integration Test Employer',
-    email: process.env.TEST_EMPLOYER_EMAIL || 'testflow@gsb.com',
-    password: process.env.TEST_EMPLOYER_PASSWORD || 'Employer@123',
-    role: 'employer',
-    companyInfo: {
-      name: 'Integration Test Co',
-      industry: 'Testing',
-    }
-  };
+  // // Test accounts
+  // const adminCreds = { email: process.env.TEST_ADMIN_EMAIL || 'admin@gsb.com', password: process.env.TEST_ADMIN_PASSWORD || 'Admin@GSB2024' };
+  // const employerData = {
+  //   name: 'Integration Test Employer',
+  //   email: process.env.TEST_EMPLOYER_EMAIL || 'testflow@gsb.com',
+  //   password: process.env.TEST_EMPLOYER_PASSWORD || 'Employer@123',
+  //   role: 'employer',
+  //   companyInfo: {
+  //     name: 'Integration Test Co',
+  //     industry: 'Testing',
+  //   }
+  // };
 
   // Cleanup any existing test employer in DB
   try {
@@ -116,7 +116,7 @@ async function main() {
       const user = res.data.user;
       console.log('Employer login successful. isApproved:', user.isApproved, 'isActive:', user.isActive);
       if (user.isApproved) {
-        console.log('\n✅ Integration test passed: approved employer can login.');
+        console.log('\n Integration test passed: approved employer can login.');
         process.exit(0);
       } else {
         console.error('\n✗ Integration test failed: employer login succeeded but isApproved is false.');
