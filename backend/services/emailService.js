@@ -697,7 +697,7 @@ class EmailService {
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
           .header { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0; }
           .content { background: #f9f9f9; padding: 30px 20px; border-radius: 0 0 8px 8px; }
-          .button { display: inline-block; background: #28a745; color: white; text-decoration: none; padding: 15px 30px; border-radius: 6px; margin: 20px 0; font-weight: bold; }
+          .button { display: inline-block; background: #28a745; color: white; text-decoration: none; padding: 10px 20px; border-radius: 6px; margin: 16px 0; font-weight: 600; font-size: 14px; }
           .verification-box { background: white; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #28a745; text-align: center; }
           .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
         </style>
@@ -720,14 +720,6 @@ class EmailService {
               <a href="${verificationUrl}" style="color: #28a745; word-break: break-all;">${verificationUrl}</a>
             </p>
           </div>
-
-          <h3>✨ What's next after verification?</h3>
-          <ul>
-            <li>Complete your profile to get better job matches</li>
-            <li>Start browsing thousands of job opportunities</li>
-            <li>Connect with mentors and industry professionals</li>
-            <li>Access skills verification and training programs</li>
-          </ul>
 
           <div style="text-align: center; margin: 30px 0;">
             <a href="${dashboardUrl}" style="color: #28a745; text-decoration: none;">Go to Dashboard →</a>
@@ -756,12 +748,6 @@ class EmailService {
 
       To verify your email, please visit the following link:
       ${verificationUrl}
-
-      ✨ What's next after verification?
-      - Complete your profile to get better job matches
-      - Start browsing thousands of job opportunities
-      - Connect with mentors and industry professionals
-      - Access skills verification and training programs
 
       Welcome aboard, and we look forward to helping you achieve your career goals!
 
