@@ -1299,11 +1299,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     console.log('Logo preview (first 100 chars):', profileData.companyLogo?.substring(0, 100));
     console.log('Current user:', user);
     
-    if (user) {
+    const token = localStorage.getItem('token');
+
+    // Send to backend when we have an auth token. The `user` object
+    // may not be populated yet (race between auth context and redirect),
+    // but the token in localStorage is sufficient for the protected route.
+    if (token) {
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('/api/users/profile', {
-          method: 'PUT',
+        const response = await fetch('/api/employers/onboard', {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -1316,12 +1320,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
               website: profileData.website,
               description: profileData.description,
               registrationNumber: profileData.companyRegistration,
-              establishedYear: profileData.founded ? parseInt(profileData.founded) : undefined
+              establishedYear: profileData.founded ? parseInt(profileData.founded) : undefined,
+              taxId: profileData.taxId,
+              linkedInProfile: profileData.linkedinProfile,
+              benefits: profileData.benefits,
+              workCulture: profileData.workCulture,
+              remotePolicy: profileData.remotePolicy,
+              contactPerson: profileData.contactPerson
             },
             location: {
               city: profileData.city,
               country: profileData.country,
-              address: profileData.address
+              address: profileData.address,
+              postalCode: profileData.postalCode
             },
             phone: profileData.phone,
             avatar: profileData.companyLogo ? {
@@ -1339,8 +1350,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         console.log('Profile saved to backend:', result);
       } catch (error) {
         console.error('Error saving profile to backend:', error);
-        
       }
+    } else {
+      console.warn('No auth token found in localStorage; skipping backend submit');
     }
     
     setEmployerProfiles(prev => {

@@ -213,7 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     getCurrentUser();
   }, [getCurrentUser]);
 
-  const register = async (userData: RegisterData): Promise<{ success: boolean; message?: string }> => {
+  const register = async (userData: RegisterData): Promise<{ success: boolean; message?: string; nextStep?: string }> => {
     try {
       setLoading(true);
       setError(null);
@@ -231,7 +231,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (response.ok && data.success) {
         saveAuthData(data.token, data.refreshToken, data.user);
-        return { success: true, message: data.message };
+        // return server response including any extra flags (e.g., nextStep)
+        return { success: true, message: data.message, nextStep: data.nextStep };
       } else {
         setError(data.message || 'Registration failed');
         return { success: false, message: data.message || 'Registration failed' };

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNotification } from '../../contexts/NotificationContext';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import PromptDialog from '../../components/PromptDialog';
@@ -102,7 +102,7 @@ function AdminEmployerApproval() {
     }
   }, [user, navigate]);
 
-  const fetchEmployers = async () => {
+  const fetchEmployers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -139,13 +139,13 @@ function AdminEmployerApproval() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [notify]);
 
   useEffect(() => {
     if (user && (user.role === 'admin' || user.role === 'rtb-admin')) {
       fetchEmployers();
     }
-  }, [user]);
+  }, [user, fetchEmployers]);
 
   if (!user) {
     return (
@@ -641,9 +641,9 @@ function AdminEmployerApproval() {
                     {selectedEmployer.adminNotes.map((note, index) => (
                       <div key={index} className="bg-gray-50 rounded-lg p-4 border">
                         <p className="text-sm text-gray-900 mb-2">{note.note}</p>
-                        <p className="text-xs text-gray-500">
-                          Added on {formatDate(note.addedAt)} by {note.addedBy}
-                        </p>
+                            <p className="text-xs text-gray-500">
+                              Added on {formatDate(note.addedAt)} by {typeof note.addedBy === 'string' ? note.addedBy : (note.addedBy?.name || note.addedBy?.email || note.addedBy?._id)}
+                            </p>
                       </div>
                     ))}
                   </div>

@@ -117,6 +117,9 @@ const userSchema = new mongoose.Schema(
       description: String,
       registrationNumber: String,
       establishedYear: Number,
+      contactPerson: String,
+      benefits: [String],
+      workCulture: String,
       taxId: String,
       remotePolicy: {
         type: String,

@@ -23,6 +23,7 @@ const notificationRoutes = require('./routes/notifications');
 const adminRoutes = require('./routes/admin');
 const rtbRoutes = require('./routes/rtb');
 const analyticsRoutes = require('./routes/analytics');
+const employersRoutes = require('./routes/employers');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -125,6 +126,12 @@ app.use('/api/', limiter);
 // CORS Configuration
 const corsOptions = {
   origin: function (origin, callback) {
+    // In development, allow any origin to ease local testing (Vite, Postman, etc.).
+    // In production we enforce a whitelist below.
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+
     // Normalize configured frontend URL to avoid trailing-slash mismatches
     const rawFront = process.env.FRONTEND_URL || 'http://localhost:3000';
     const frontendUrl = String(rawFront).replace(/\/+$/, '');
@@ -153,6 +160,11 @@ const corsOptions = {
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
+
+// Ensure explicit handling of CORS preflight (OPTIONS) requests
+// This guarantees the Access-Control-Allow-* headers are present
+// even if later route middleware (e.g. auth) would otherwise short-circuit.
+app.options('*', cors(corsOptions));
 
 // Compression
 app.use(compression());
@@ -247,7 +259,9 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/rtb', rtbRoutes);
 app.use('/api/analytics', analyticsRoutes);
-app.post("/api/uploads", )
+app.use('/api/employers', employersRoutes);
+// NOTE: removed an accidental incomplete upload route declaration that caused
+// a syntax/runtime error when present. File uploads are handled by `/upload` above.
 // Swagger API Documentation
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',

@@ -81,12 +81,8 @@ function DashboardRouter() {
   if (!user) return <Navigate to="/login" />;
   
     if (user.role === 'employer') {
-      if (!user.profileCompletion || user.profileCompletion < 100) {
-        return <Navigate to="/employer/onboarding" />;
-      }
-
-      // If backend exposes boolean isApproved, use that. If not present but legacy
-      // approvalStatus exists, fall back to it.
+      // Prefer approval status first. If not approved, block access and show pending-approval.
+      // If approved, allow access to the dashboard even if `profileCompletion` is incomplete.
       if (typeof isApproved !== 'undefined') {
         if (!isApproved) {
           return <Navigate to="/employer/pending-approval" />;
@@ -94,6 +90,11 @@ function DashboardRouter() {
       } else if (approvalStatus === 'pending' || approvalStatus === 'rejected') {
         return <Navigate to="/employer/pending-approval" />;
       }
+
+      // Note: previously we forced employers with incomplete `profileCompletion`
+      // to `/employer/onboarding`. Admin-approved employers should not be
+      // blocked by that — they can complete onboarding later from their
+      // dashboard. Therefore we intentionally do not redirect to onboarding here.
     }
   
   switch (user.role) {

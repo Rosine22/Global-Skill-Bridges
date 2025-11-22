@@ -3,6 +3,7 @@ const { body, query, validationResult } = require("express-validator");
 const Job = require("../models/Job");
 const Application = require("../models/Application");
 const { protect, authorize, optionalAuth } = require("../middleware/auth");
+const { getRedis } = require('../utils/redisClient').default;
 
 const router = express.Router();
 
@@ -170,6 +171,21 @@ router.get(
       const limit = parseInt(req.query.limit) || 20;
       const skip = (page - 1) * limit;
 
+      // Try to serve cached result for anonymous requests
+      const redis = getRedis();
+      const isAnonymous = !req.user;
+      const cacheKey = `jobs:${req.originalUrl}`;
+      if (isAnonymous && redis) {
+        try {
+          const cached = await redis.get(cacheKey);
+          if (cached) {
+            return res.status(200).json(JSON.parse(cached));
+          }
+        } catch (err) {
+          console.error('Redis get error:', err);
+        }
+      }
+
       // Build filter object
       const filter = {
         status: "active",
@@ -273,7 +289,7 @@ router.get(
         });
       }
 
-      res.status(200).json({
+      const responsePayload = {
         success: true,
         count: jobs.length,
         total,
@@ -288,7 +304,18 @@ router.get(
           types: await Job.distinct("type", { status: "active" }),
           levels: await Job.distinct("level", { status: "active" }),
         },
-      });
+      };
+
+      // Cache anonymous responses for a short period
+      if (isAnonymous && redis) {
+        try {
+          await redis.set(cacheKey, JSON.stringify(responsePayload), 'EX', parseInt(process.env.JOBS_CACHE_TTL || '300', 10));
+        } catch (err) {
+          console.error('Redis set error:', err);
+        }
+      }
+
+      res.status(200).json(responsePayload);
     } catch (error) {
       next(error);
     }

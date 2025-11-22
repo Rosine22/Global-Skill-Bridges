@@ -47,8 +47,9 @@ function LoginPage() {
         if (postLoginRedirect) {
           navigate(postLoginRedirect);
         } else if (currentUser && currentUser.role === 'employer') {
-          // Admin-approved employers should be able to access employer dashboard
-          navigate('/employer/dashboard');
+          // Route to the unified dashboard route; App's router maps `/dashboard`
+          // to the correct role-specific dashboard (employer, job-seeker, etc.).
+          navigate('/dashboard');
         } else {
           navigate('/dashboard');
         }

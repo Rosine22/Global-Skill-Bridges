@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNotification } from '../../contexts/NotificationContext';
 import DashboardLayout from '../../components/DashboardLayout';
 import { 
@@ -14,6 +14,7 @@ import {
   MapPin,
   Briefcase
 } from 'lucide-react';
+import { getApiUrl, getAuthHeaders, API_ENDPOINTS } from '../../config/api';
 
 interface Program {
   id: string;
@@ -38,116 +39,49 @@ function RTBProgramsPage() {
   const [selectedInstitution, setSelectedInstitution] = useState('all');
   const [sortBy, setSortBy] = useState('employment');
 
-  const programs: Program[] = [
-    {
-      id: '1',
-      name: 'Software Development',
-      institution: 'Rwanda Polytechnic',
-      duration: '3 years',
-      graduates: 156,
-      employmentRate: 87,
-      averageSalary: '$58,000',
-      skillsVerified: 89,
-      internationalPlacements: 68,
-      rating: 4.6,
-      status: 'excellent',
-      trends: {
-        enrollment: 'up',
-        employment: 'up',
-        satisfaction: 'up'
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchPrograms = async () => {
+      setLoading(true);
+      try {
+        const headers = getAuthHeaders();
+        const res = await fetch(getApiUrl(`${API_ENDPOINTS.RTB}/dashboard`), { headers });
+        if (!res.ok) return;
+        const json = await res.json();
+        const data = json.data || {};
+        const perf = data.programPerformance || [];
+        // Map programPerformance to Program shape
+        const mapped: Program[] = perf.map((p: any, idx: number) => ({
+          id: p._id || String(idx),
+          name: p.program || p._id || 'Unknown',
+          institution: p.institution || 'Various',
+          duration: p.duration || 'N/A',
+          graduates: p.totalGraduates || p.total || 0,
+          employmentRate: Math.round(p.employmentRate || (p.employed && p.totalGraduates ? (p.employed / p.totalGraduates) * 100 : 0)),
+          averageSalary: p.avgSalary ? `$${p.avgSalary}` : p.avgSalary || 'N/A',
+          skillsVerified: p.verifiedSkills || 0,
+          internationalPlacements: p.internationalPlacements || 0,
+          rating: p.avgRating || 0,
+          status: 'good',
+          trends: {
+            enrollment: 'stable',
+            employment: 'stable',
+            satisfaction: 'stable'
+          }
+        }));
+
+        setPrograms(mapped);
+      } catch (err) {
+        console.error('Failed to load program performance', err);
+      } finally {
+        setLoading(false);
       }
-    },
-    {
-      id: '2',
-      name: 'Electrical Engineering',
-      institution: 'IPRC Kigali',
-      duration: '3 years',
-      graduates: 134,
-      employmentRate: 78,
-      averageSalary: '$52,000',
-      skillsVerified: 76,
-      internationalPlacements: 45,
-      rating: 4.3,
-      status: 'good',
-      trends: {
-        enrollment: 'stable',
-        employment: 'up',
-        satisfaction: 'stable'
-      }
-    },
-    {
-      id: '3',
-      name: 'Automotive Technology',
-      institution: 'IPRC Musanze',
-      duration: '2.5 years',
-      graduates: 98,
-      employmentRate: 82,
-      averageSalary: '$48,000',
-      skillsVerified: 71,
-      internationalPlacements: 32,
-      rating: 4.4,
-      status: 'good',
-      trends: {
-        enrollment: 'up',
-        employment: 'stable',
-        satisfaction: 'up'
-      }
-    },
-    {
-      id: '4',
-      name: 'Civil Engineering',
-      institution: 'IPRC Huye',
-      duration: '3 years',
-      graduates: 112,
-      employmentRate: 65,
-      averageSalary: '$45,000',
-      skillsVerified: 58,
-      internationalPlacements: 28,
-      rating: 3.9,
-      status: 'needs-improvement',
-      trends: {
-        enrollment: 'down',
-        employment: 'down',
-        satisfaction: 'stable'
-      }
-    },
-    {
-      id: '5',
-      name: 'Information Technology',
-      institution: 'Rwanda Coding Academy',
-      duration: '2 years',
-      graduates: 89,
-      employmentRate: 91,
-      averageSalary: '$62,000',
-      skillsVerified: 94,
-      internationalPlacements: 72,
-      rating: 4.8,
-      status: 'excellent',
-      trends: {
-        enrollment: 'up',
-        employment: 'up',
-        satisfaction: 'up'
-      }
-    },
-    {
-      id: '6',
-      name: 'Mechanical Engineering',
-      institution: 'IPRC Kigali',
-      duration: '3 years',
-      graduates: 87,
-      employmentRate: 74,
-      averageSalary: '$49,000',
-      skillsVerified: 65,
-      internationalPlacements: 31,
-      rating: 4.1,
-      status: 'good',
-      trends: {
-        enrollment: 'stable',
-        employment: 'stable',
-        satisfaction: 'down'
-      }
-    }
-  ];
+    };
+
+    fetchPrograms();
+  }, []);
 
   const institutions = Array.from(new Set(programs.map(p => p.institution)));
   
@@ -208,10 +142,10 @@ function RTBProgramsPage() {
   };
 
   const overallStats = {
-    totalGraduates: programs.reduce((sum, p) => sum + p.graduates, 0),
-    averageEmployment: Math.round(programs.reduce((sum, p) => sum + p.employmentRate, 0) / programs.length),
-    averageRating: (programs.reduce((sum, p) => sum + p.rating, 0) / programs.length).toFixed(1),
-    totalInternational: programs.reduce((sum, p) => sum + p.internationalPlacements, 0)
+    totalGraduates: programs.reduce((sum, p) => sum + (p.graduates || 0), 0),
+    averageEmployment: programs.length > 0 ? Math.round(programs.reduce((sum, p) => sum + (p.employmentRate || 0), 0) / programs.length) : 0,
+    averageRating: programs.length > 0 ? (programs.reduce((sum, p) => sum + (p.rating || 0), 0) / programs.length).toFixed(1) : '0.0',
+    totalInternational: programs.reduce((sum, p) => sum + (p.internationalPlacements || 0), 0)
   };
   const notify = useNotification();
 

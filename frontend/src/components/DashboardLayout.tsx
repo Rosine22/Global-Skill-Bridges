@@ -1,4 +1,5 @@
 import React from 'react';
+import LanguageSwitcher from './LanguageSwitcher';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
@@ -15,6 +16,7 @@ import {
   BarChart3,
   FileText
 } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -24,6 +26,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [isCollapsed, setIsCollapsed] = React.useState(false);
 
   const handleLogout = () => {
     logout();
@@ -87,67 +90,101 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-fit bg-gray-50 flex">
-      <div className="w-64 bg-white shadow-sm border-r flex flex-col">
-    
-        <div className="p-6 border-b">
-          <Link to="/" className="flex items-center">
-            <Globe className="h-8 w-8 text-primary-600" />
-            <span className="ml-2 text-xl font-bold text-gray-900">GSB</span>
-          </Link>
-        </div>
+      {/* Sidebar - expanded */}
+      {!isCollapsed ? (
+        <div className="w-64 bg-white shadow-sm border-r flex flex-col">
+          <div className="p-6 border-b flex items-center justify-between">
+            <Link to="/" className="flex items-center">
+              <Globe className="h-8 w-8 text-primary-600" />
+              <span className="ml-2 text-xl font-bold text-gray-900">GSB</span>
+            </Link>
+            <button
+              aria-label="Collapse menu"
+              onClick={() => setIsCollapsed(true)}
+              className="p-2 rounded-md hover:bg-gray-100 text-gray-600"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
 
-        <nav className="flex-1 p-6">
-          <ul className="space-y-2">
-            {navItems.map((item) => {
-              const IconComponent = item.icon;
-              const isActive = location.pathname === item.href;
-              return (
-                <li key={item.name}>
-                  <Link
-                    to={item.href}
-                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      isActive
-                        ? 'bg-primary-50 text-primary-700 border-r-2 border-primary-700'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                  >
-                    <IconComponent className="h-5 w-5 mr-3" />
-                    {item.name}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+          <nav className="flex-1 p-6">
+            <ul className="space-y-2">
+              {navItems.map((item) => {
+                const IconComponent = item.icon;
+                const isActive = location.pathname === item.href;
+                return (
+                  <li key={item.name}>
+                    <Link
+                      to={item.href}
+                      className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                        isActive
+                          ? 'bg-primary-50 text-primary-700 border-r-2 border-primary-700'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <IconComponent className="h-5 w-5 mr-3" />
+                      {item.name}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
 
-        <div className="p-6 border-t">
-          <div className="flex items-center mb-4">
-            <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
-              {user?.name?.charAt(0).toUpperCase()}
+          <div className="p-6 border-t">
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
+                {user?.name?.charAt(0).toUpperCase()}
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                <p className="text-xs text-gray-500 capitalize">
+                  {user?.role?.replace('-', ' ')}
+                </p>
+              </div>
             </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-              <p className="text-xs text-gray-500 capitalize">
-                {user?.role?.replace('-', ' ')}
-              </p>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={handleLogout}
+                className="flex items-center px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-lg transition-colors"
+              >
+                <LogOut className="h-4 w-4 mr-3" />
+                Sign out
+              </button>
             </div>
           </div>
+        </div>
+      ) : (
+        /* Sidebar - collapsed (narrow bar with open button) */
+        <div className="w-12 bg-white shadow-sm border-r flex flex-col items-center py-4">
           <button
-            onClick={handleLogout}
-            className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-lg transition-colors"
+            aria-label="Open menu"
+            onClick={() => setIsCollapsed(false)}
+            className="p-2 rounded-md hover:bg-gray-100 text-gray-600"
           >
-            <LogOut className="h-4 w-4 mr-3" />
-            Sign out
+            <Menu className="h-6 w-6" />
           </button>
         </div>
-      </div>
+      )}
 
       <div className="flex-1 flex flex-col">
         <header className="bg-white shadow-sm border-b">
           <div className="px-6 py-4 flex justify-between items-center">
-            <h1 className="text-2xl font-semibold text-gray-900">
-              Dashboard
-            </h1>
+            <div className="flex items-center space-x-4">
+              {/* When sidebar is collapsed show a menu button in header for discoverability */}
+              {isCollapsed && (
+                <button
+                  aria-label="Open menu"
+                  onClick={() => setIsCollapsed(false)}
+                  className="p-2 rounded-md hover:bg-gray-100 text-gray-600 mr-2"
+                >
+                  <Menu className="h-6 w-6" />
+                </button>
+              )}
+              <h1 className="text-2xl font-semibold text-gray-900">
+                Dashboard
+              </h1>
+            </div>
             <div className="flex items-center space-x-4">
               <Link
                 to="/notifications"
@@ -164,6 +201,13 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                   {user?.name?.charAt(0).toUpperCase()}
                 </div>
               </Link>
+              {/* Language switcher */}
+              <div className="ml-2">
+                {/* Lazy load component to avoid circular imports if any */}
+                <React.Suspense fallback={<div className="text-sm text-gray-500">EN</div>}>
+                  <LanguageSwitcher />
+                </React.Suspense>
+              </div>
             </div>
           </div>
         </header>

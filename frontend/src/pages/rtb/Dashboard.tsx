@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/DashboardLayout';
 import { 
@@ -14,6 +14,7 @@ import {
   MessageSquare,
   X
 } from 'lucide-react';
+import { getApiUrl, getAuthHeaders, API_ENDPOINTS } from '../../config/api';
 
 interface Graduate {
   id: string;
@@ -32,6 +33,40 @@ interface Graduate {
   lastUpdate: string;
 }
 
+interface ProgramPerformance {
+  program?: string;
+  _id?: string;
+  totalGraduates?: number;
+  total?: number;
+  employmentRate?: number;
+  avgSalary?: number;
+}
+
+interface SkillGap {
+  skill?: string;
+  _id?: string;
+  skillName?: string;
+  totalMentions?: number;
+  criticalMentions?: number;
+  priority?: string;
+  count?: number;
+}
+
+interface InternationalStats {
+  totalWithInternationalInterest?: number;
+  currentlyInternational?: number;
+}
+
+interface EmploymentTrend {
+  _id?: { status?: string } | string;
+  status?: string;
+  count?: number;
+}
+
+interface SalaryEntry {
+  avgSalary?: number;
+}
+
 function RTBDashboard() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
@@ -40,80 +75,123 @@ function RTBDashboard() {
   const [showEmploymentModal, setShowEmploymentModal] = useState(false);
   const [selectedEmploymentStatus, setSelectedEmploymentStatus] = useState<string>('');
 
-  // Mock graduates data
-  const graduates: Graduate[] = [
-    {
-      id: '1',
-      name: 'John Mukamana',
-      program: 'Software Development',
-      graduationYear: 2023,
-      skills: ['JavaScript', 'React', 'Node.js', 'Python'],
-      employmentStatus: 'employed',
-      currentPosition: 'Junior Developer',
-      currentCompany: 'TechCorp International',
-      location: 'Toronto, Canada',
-      salaryRange: '$65,000 - $75,000 CAD',
-      skillsVerified: 8,
-      totalSkills: 10,
-      mentorshipStatus: 'completed',
-      lastUpdate: '2024-01-15'
-    },
-    {
-      id: '2',
-      name: 'Marie Uwimana',
-      program: 'Electrical Engineering',
-      graduationYear: 2023,
-      skills: ['Circuit Design', 'PLC Programming', 'AutoCAD', 'Power Systems'],
-      employmentStatus: 'seeking',
-      location: 'Kigali, Rwanda',
-      skillsVerified: 6,
-      totalSkills: 8,
-      mentorshipStatus: 'active',
-      lastUpdate: '2024-01-20'
-    },
-    {
-      id: '3',
-      name: 'David Nzeyimana',
-      program: 'Automotive Technology',
-      graduationYear: 2022,
-      skills: ['Engine Diagnostics', 'Brake Systems', 'Transmission Repair'],
-      employmentStatus: 'employed',
-      currentPosition: 'Automotive Technician',
-      currentCompany: 'German Auto Group',
-      location: 'Munich, Germany',
-      salaryRange: '€45,000 - €52,000',
-      skillsVerified: 7,
-      totalSkills: 9,
-      mentorshipStatus: 'completed',
-      lastUpdate: '2024-01-18'
-    },
-    {
-      id: '4',
-      name: 'Grace Mukamana',
-      program: 'Software Development',
-      graduationYear: 2023,
-      skills: ['Java', 'Spring Boot', 'MySQL', 'Angular'],
-      employmentStatus: 'unemployed',
-      location: 'Kigali, Rwanda',
-      skillsVerified: 4,
-      totalSkills: 8,
-      mentorshipStatus: 'none',
-      lastUpdate: '2024-01-22'
-    },
-    {
-      id: '5',
-      name: 'Patrick Habimana',
-      program: 'Civil Engineering',
-      graduationYear: 2022,
-      skills: ['Structural Design', 'Project Management', 'CAD', 'Construction'],
-      employmentStatus: 'further-study',
-      location: 'Kigali, Rwanda',
-      skillsVerified: 5,
-      totalSkills: 7,
-      mentorshipStatus: 'active',
-      lastUpdate: '2024-01-19'
-    }
-  ];
+  const [graduates, setGraduates] = useState<Graduate[]>([]);
+  const [overview, setOverview] = useState({
+    totalGraduates: 0,
+    employmentRate: 0,
+    internationalPlacements: 0,
+    averageSalary: 0
+  });
+  const [skillsOverview, setSkillsOverview] = useState({
+    totalSkills: 0,
+    verifiedSkills: 0,
+    verificationRate: 0
+  });
+  const [programPerformance, setProgramPerformance] = useState<ProgramPerformance[]>([]);
+  const [skillsGaps, setSkillsGaps] = useState<SkillGap[]>([]);
+  const [internationalStats, setInternationalStats] = useState<InternationalStats>({});
+  const [employmentTrends, setEmploymentTrends] = useState<EmploymentTrend[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const headers = getAuthHeaders();
+
+        const [rtbRes, skillsRes, analyticsRes] = await Promise.all([
+          fetch(getApiUrl(`${API_ENDPOINTS.RTB}/dashboard`), { headers }),
+          fetch(getApiUrl('/api/skills/analytics'), { headers }),
+          fetch(getApiUrl(`${API_ENDPOINTS.RTB}/analytics?timeframe=yearly`), { headers })
+        ]);
+
+        if (rtbRes.ok) {
+          const rtbJson = await rtbRes.json();
+          const data = rtbJson.data || {};
+          setGraduates((data.recentGraduates || []).map((g: unknown) => {
+            const rec = g as Record<string, unknown>;
+            const userObj = rec.user as Record<string, unknown> | undefined;
+            const id = (rec._id as string) || (rec.id as string) || (userObj && (userObj._id as string)) || String(Math.random());
+            const name = (userObj && (userObj.name as string)) || (userObj && (userObj.fullName as string)) || (rec.name as string) || 'Unknown';
+            const program = (rec.program as string) || (rec.programName as string) || 'Unknown';
+            const graduationYear = (rec.graduationYear as number) || (rec.year as number) || new Date().getFullYear();
+            const rawSkills = (rec.skills as unknown[]) || [];
+            const skills: string[] = rawSkills.map((s) => {
+              if (typeof s === 'string') return s;
+              const maybe = s as Record<string, unknown>;
+              return typeof maybe.name === 'string' ? maybe.name : '';
+            }).filter(Boolean) as string[];
+
+            const employmentHistory = rec.employmentHistory as Record<string, unknown>[] | undefined;
+            const employmentStatus = (rec.employmentStatus as Graduate['employmentStatus']) || 'seeking';
+            const currentPosition = (rec.currentPosition as string) || (employmentHistory && (employmentHistory[0].position as string)) || undefined;
+            const currentCompany = (rec.currentCompany as string) || (employmentHistory && (employmentHistory[0].company as string)) || undefined;
+            const userLocation = userObj?.location as Record<string, unknown> | undefined;
+            const location = userLocation && typeof userLocation.city === 'string' && typeof userLocation.country === 'string' ? `${userLocation.city as string}, ${userLocation.country as string}` : ((rec.location as string) || 'Unknown');
+            const salaryRange = rec.currentSalaryRange as string | undefined;
+            const skillsVerified = (rec.skillsVerified as number) || 0;
+            const totalSkills = (rec.totalSkills as number) || 0;
+            const mentorshipStatus = (rec.mentorshipStatus as Graduate['mentorshipStatus']) || 'none';
+            const lastUpdate = (rec.lastContactDate as string) || (rec.updatedAt as string) || (rec.createdAt as string) || new Date().toISOString();
+
+            return {
+              id,
+              name,
+              program,
+              graduationYear,
+              skills,
+              employmentStatus,
+              currentPosition,
+              currentCompany,
+              location,
+              salaryRange,
+              skillsVerified,
+              totalSkills,
+              mentorshipStatus,
+              lastUpdate
+            } as Graduate;
+          }));
+
+          setOverview({
+            totalGraduates: data.overview?.totalGraduates || data.totalGraduates || 0,
+            employmentRate: parseFloat(data.overview?.overallEmploymentRate || data.overallEmploymentRate || 0),
+            internationalPlacements: data.overview?.internationalPlacements || data.internationalPlacements || 0,
+            averageSalary: 0
+          });
+
+          // program performance, skills gaps, international stats and trends
+          setProgramPerformance(data.programPerformance || []);
+          setSkillsGaps(data.skillsGaps || []);
+          setInternationalStats(data.internationalStats || {});
+          setEmploymentTrends(data.employmentTrends || []);
+        }
+
+        if (skillsRes.ok) {
+          const skillsJson = await skillsRes.json();
+          const sdata = skillsJson.data || {};
+          const tot = sdata.overview?.totalSkills || 0;
+          const verified = sdata.overview?.verifiedSkills || 0;
+          setSkillsOverview({
+            totalSkills: tot,
+            verifiedSkills: verified,
+            verificationRate: tot > 0 ? Math.round((verified / tot) * 100) : 0
+          });
+        }
+
+        if (analyticsRes.ok) {
+          const ajson = await analyticsRes.json();
+          const aData = ajson.data || {};
+          const salaryArr: SalaryEntry[] = aData.salaryAnalysis || [];
+          if (salaryArr.length > 0) {
+            const avg = Math.round(salaryArr.reduce((sum, s) => sum + (s.avgSalary || 0), 0) / salaryArr.length);
+            setOverview(prev => ({ ...prev, averageSalary: avg }));
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load RTB dashboard data', err);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const filteredGraduates = graduates.filter(graduate => {
     const matchesSearch = graduate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -126,29 +204,29 @@ function RTBDashboard() {
   const stats = [
     {
       title: 'Total Graduates',
-      value: graduates.length,
-      change: '+12 this year',
+      value: overview.totalGraduates,
+      change: '',
       icon: Users,
       color: 'text-primary-600'
     },
     {
       title: 'Employment Rate',
-      value: `${Math.round((graduates.filter(g => g.employmentStatus === 'employed').length / graduates.length) * 100)}%`,
-      change: '+5% from last year',
+      value: `${overview.employmentRate}%`,
+      change: '',
       icon: TrendingUp,
       color: 'text-secondary-600'
     },
     {
       title: 'Skills Verified',
-      value: graduates.reduce((sum, g) => sum + g.skillsVerified, 0),
-      change: '+23 this month',
+      value: skillsOverview.verifiedSkills,
+      change: '',
       icon: Award,
       color: 'text-purple-600'
     },
     {
       title: 'International Placements',
-      value: graduates.filter(g => !g.location.includes('Rwanda')).length,
-      change: '+3 this quarter',
+      value: overview.internationalPlacements,
+      change: '',
       icon: MapPin,
       color: 'text-orange-600'
     }
@@ -483,56 +561,136 @@ function RTBDashboard() {
           </div>
         </div>
 
-        {/* Skills Gap Analysis */}
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="p-6 border-b">
-            <h2 className="text-lg font-semibold text-gray-900">Skills Gap Analysis</h2>
+        {/* Skills Gap Analysis, Program Effectiveness, Deployment Analysis */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Skills Gap */}
+          <div className="bg-white rounded-lg shadow-sm border">
+            <div className="p-6 border-b">
+              <h2 className="text-lg font-semibold text-gray-900">Skills Gap Analysis</h2>
+            </div>
+            <div className="p-6">
+              <div className="grid md:grid-cols-1 gap-6">
+                <div>
+                  <h3 className="font-medium text-gray-900 mb-3">Most In-Demand Skills</h3>
+                  <div className="space-y-2">
+                    {(skillsGaps && skillsGaps.length > 0 ?
+                      [...skillsGaps]
+                        .sort((a,b)=> (b.totalMentions || 0) - (a.totalMentions || 0))
+                        .slice(0,3)
+                        .map((s) => (
+                          <div key={s.skill || s._id || s.skillName} className="flex justify-between items-center">
+                            <span className="text-sm text-gray-700">{s.skill || s._id || s.skillName}</span>
+                            <span className="text-sm font-medium text-primary-600">{(s.totalMentions ?? s.count ?? '—')}</span>
+                          </div>
+                        )) : (
+                          <div className="text-sm text-gray-500">No skills demand data available.</div>
+                        )
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-medium text-gray-900 mb-3">Top Skills Gaps</h3>
+                  <div className="space-y-2">
+                    {(skillsGaps && skillsGaps.length > 0 ?
+                      [...skillsGaps]
+                        .sort((a,b)=> (b.criticalMentions || 0) - (a.criticalMentions || 0))
+                        .slice(0,3)
+                        .map((s)=> (
+                          <div key={(s.skill || s._id || s.skillName)+"-gap"} className="flex justify-between items-center">
+                            <span className="text-sm text-gray-700">{s.skill || s._id || s.skillName}</span>
+                            <span className="text-sm font-medium text-red-600">{(s.criticalMentions ?? s.totalMentions ?? '—')}</span>
+                          </div>
+                        )) : (
+                          <div className="text-sm text-gray-500">No skills gap data available.</div>
+                        )
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-medium text-gray-900 mb-3">Recommendations</h3>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    {skillsGaps && skillsGaps.length > 0 ? (
+                        skillsGaps
+                          .filter((s)=> (s.priority || '').toLowerCase() === 'high')
+                          .slice(0,4)
+                          .map((s)=> (
+                            <p key={(s.skill||s._id||s.skillName)+"-rec"}>• Prioritise training for {s.skill || s._id || s.skillName} ({(s.criticalMentions ?? s.totalMentions)} mentions)</p>
+                          ))
+                    ) : (
+                      <>
+                        <p>• No detailed recommendations available — collect more assessments.</p>
+                        <p>• Consider partnerships for short courses on cloud, data and DevOps.</p>
+                        <p>• Increase mentorship and employer engagement to validate skills.</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="p-6">
-            <div className="grid md:grid-cols-3 gap-6">
-              <div>
-                <h3 className="font-medium text-gray-900 mb-3">Most In-Demand Skills</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-700">JavaScript</span>
-                    <span className="text-sm font-medium text-primary-600">85%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-700">Python</span>
-                    <span className="text-sm font-medium text-primary-600">72%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-700">React</span>
-                    <span className="text-sm font-medium text-primary-600">68%</span>
-                  </div>
-                </div>
+
+          {/* Program Effectiveness */}
+          <div className="bg-white rounded-lg shadow-sm border lg:col-span-1">
+            <div className="p-6 border-b flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Program Effectiveness</h2>
+              <Link to="/rtb/programs" className="text-sm text-primary-600">See all</Link>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                {(programPerformance && programPerformance.length > 0) ? (
+                  programPerformance.slice(0,6).map((p)=> (
+                    <div key={p.program || p._id || Math.random()} className="flex items-center justify-between border border-gray-100 rounded-lg p-3">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{p.program || p._id}</div>
+                        <div className="text-xs text-gray-500">Graduates: {(p.totalGraduates ?? p.total) || 0}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-semibold">{Math.round((p.employmentRate ?? 0))}%</div>
+                        <div className="text-xs text-gray-500">Avg salary: {p.avgSalary ? `$${p.avgSalary}` : '—'}</div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-gray-500">No program performance data available.</div>
+                )}
               </div>
-              
-              <div>
-                <h3 className="font-medium text-gray-900 mb-3">Skills Gaps</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-700">Cloud Computing</span>
-                    <span className="text-sm font-medium text-red-600">32%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-700">DevOps</span>
-                    <span className="text-sm font-medium text-red-600">28%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-700">Data Analysis</span>
-                    <span className="text-sm font-medium text-red-600">25%</span>
-                  </div>
+            </div>
+          </div>
+
+          {/* Deployment / International Mobility & Trends */}
+          <div className="bg-white rounded-lg shadow-sm border lg:col-span-1">
+            <div className="p-6 border-b">
+              <h2 className="text-lg font-semibold text-gray-900">Deployment & Mobility</h2>
+            </div>
+            <div className="p-6">
+              <div className="space-y-3 text-sm text-gray-700">
+                <div className="flex justify-between">
+                  <span>Total with international interest</span>
+                  <span className="font-medium">{(internationalStats?.totalWithInternationalInterest ?? '—')}</span>
                 </div>
-              </div>
-              
-              <div>
-                <h3 className="font-medium text-gray-900 mb-3">Recommendations</h3>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <p>• Introduce cloud computing modules</p>
-                  <p>• Partner with tech companies for DevOps training</p>
-                  <p>• Expand data analysis curriculum</p>
-                  <p>• Increase industry mentorship programs</p>
+                <div className="flex justify-between">
+                  <span>Currently internationally placed</span>
+                  <span className="font-medium">{(internationalStats?.currentlyInternational ?? '—')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>International placement rate</span>
+                  <span className="font-medium">{internationalStats && internationalStats.currentlyInternational && internationalStats.totalWithInternationalInterest ? Math.round((internationalStats.currentlyInternational / Math.max(1, internationalStats.totalWithInternationalInterest)) * 100) + '%' : '—'}</span>
+                </div>
+
+                <div className="pt-2 border-t">
+                  <div className="text-sm text-gray-600">Employment (last 12 months):</div>
+                  <div className="mt-2 text-lg font-semibold">
+                    {employmentTrends && employmentTrends.length > 0 ? (
+                      employmentTrends.reduce((sum, t) => {
+                        const idObj = t._id as { status?: string } | undefined;
+                        const status = (idObj && idObj.status) || (t.status) || '';
+                        return status === 'employed' ? sum + (t.count || 0) : sum;
+                      }, 0)
+                    ) : '—'}
+                  </div>
+                  <div className="text-xs text-gray-500">Number of employment events recorded in recent trends</div>
                 </div>
               </div>
             </div>

@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 require('dotenv').config();
+const { enqueueEmail } = require('../queues/emailQueue');
 
 
 class EmailService {
@@ -39,6 +40,16 @@ class EmailService {
    * Send application status update email
    */
   async sendApplicationStatusUpdate(application, user, newStatus) {
+    // If EMAIL_QUEUE is enabled and Redis configured, enqueue the email job
+    if (process.env.EMAIL_QUEUE === 'true' && enqueueEmail) {
+      try {
+        const job = await enqueueEmail('sendApplicationStatusUpdate', { application, user, newStatus });
+        return { queued: true, jobId: job ? job.id : null };
+      } catch (err) {
+        console.error('Error enqueueing email job:', err);
+      }
+    }
+
     try {
       const templates = this.getStatusEmailTemplate(application, user, newStatus);
       
@@ -74,6 +85,16 @@ class EmailService {
         text: templates.text
       };
 
+      // enqueue support
+      if (process.env.EMAIL_QUEUE === 'true' && enqueueEmail) {
+        try {
+          const job = await enqueueEmail('sendInterviewScheduledEmail', { application, user, interviewDetails });
+          return { queued: true, jobId: job ? job.id : null };
+        } catch (err) {
+          console.error('Error enqueueing interview email job:', err);
+        }
+      }
+
       const info = await this.transporter.sendMail(mailOptions);
       console.log('Interview email sent successfully:', info.messageId);
       return { success: true, messageId: info.messageId };
@@ -98,6 +119,15 @@ class EmailService {
         text: templates.text
       };
 
+      if (process.env.EMAIL_QUEUE === 'true' && enqueueEmail) {
+        try {
+          const job = await enqueueEmail('sendJobOfferEmail', { application, user, offerDetails });
+          return { queued: true, jobId: job ? job.id : null };
+        } catch (err) {
+          console.error('Error enqueueing job offer email job:', err);
+        }
+      }
+
       const info = await this.transporter.sendMail(mailOptions);
       console.log('Job offer email sent successfully:', info.messageId);
       return { success: true, messageId: info.messageId };
@@ -111,6 +141,16 @@ class EmailService {
    * Send password reset email
    */
   async sendPasswordResetEmail(email, resetToken, user) {
+    // enqueue if configured
+    if (process.env.EMAIL_QUEUE === 'true' && enqueueEmail) {
+      try {
+        const job = await enqueueEmail('sendPasswordResetEmail', { email, resetToken, user });
+        return { queued: true, jobId: job ? job.id : null };
+      } catch (err) {
+        console.error('Error enqueueing password reset email job:', err);
+      }
+    }
+
     try {
       const resetUrl = `${this.baseUrl}/reset-password/${resetToken}`;
       const templates = this.getPasswordResetEmailTemplate(email, resetUrl, user);
@@ -136,6 +176,15 @@ class EmailService {
    * Send email verification email
    */
   async sendEmailVerificationEmail(email, verificationToken, user) {
+    if (process.env.EMAIL_QUEUE === 'true' && enqueueEmail) {
+      try {
+        const job = await enqueueEmail('sendEmailVerificationEmail', { email, verificationToken, user });
+        return { queued: true, jobId: job ? job.id : null };
+      } catch (err) {
+        console.error('Error enqueueing verification email job:', err);
+      }
+    }
+
     try {
       // Direct user to the frontend login page with token+email params so they
       // must sign in first; frontend can then call the API to complete
@@ -145,7 +194,9 @@ class EmailService {
       // which will verify the token and then redirect the user to the frontend.
       const rawBackend = process.env.BACKEND_URL || process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
       const backendBase = String(rawBackend).replace(/\/+$/, '');
-      const verificationUrl = `${backendBase}/api/auth/verify-email?verifyToken=${verificationToken}&email=${encodeURIComponent(email)}&postLoginRedirect=/employer/onboard`;
+      // Use the backend verify endpoint but set the frontend post-login redirect
+      // to the actual onboarding route used by the frontend (`/employer/onboarding`).
+      const verificationUrl = `${backendBase}/api/auth/verify-email?verifyToken=${verificationToken}&email=${encodeURIComponent(email)}&postLoginRedirect=/employer/onboarding`;
       const templates = this.getEmailVerificationTemplate(email, verificationUrl, user);
       
       const mailOptions = {

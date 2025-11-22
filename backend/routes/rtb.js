@@ -8,6 +8,21 @@ const { protect, authorize } = require("../middleware/auth");
 
 const router = express.Router();
 
+// Simple in-memory cache for expensive RTB dashboard aggregation
+// TTL configurable via env `RTB_DASHBOARD_CACHE_TTL` (seconds)
+const CACHE_TTL = parseInt(process.env.RTB_DASHBOARD_CACHE_TTL, 10) || 60;
+let dashboardCache = { data: null, expiresAt: 0 };
+const getDashboardCache = () =>
+  dashboardCache.expiresAt > Date.now() ? dashboardCache.data : null;
+const setDashboardCache = (data) => {
+  dashboardCache.data = data;
+  dashboardCache.expiresAt = Date.now() + CACHE_TTL * 1000;
+};
+const invalidateDashboardCache = () => {
+  dashboardCache.data = null;
+  dashboardCache.expiresAt = 0;
+};
+
 // All RTB routes require RTB admin authentication
 router.use(protect);
 router.use(authorize("rtb-admin", "admin"));
@@ -82,6 +97,11 @@ router.use(authorize("rtb-admin", "admin"));
 // @access  Private (RTB Admin only)
 router.get("/dashboard", async (req, res, next) => {
   try {
+    // Return cached dashboard if available
+    const cached = getDashboardCache();
+    if (cached) {
+      return res.status(200).json({ success: true, data: cached, cached: true });
+    }
     // Get current year and previous years data
     const currentYear = new Date().getFullYear();
     const years = [currentYear, currentYear - 1, currentYear - 2];
@@ -272,9 +292,18 @@ router.get("/dashboard", async (req, res, next) => {
       employmentTrends,
     };
 
+    // Cache the freshly computed dashboard data
+    try {
+      setDashboardCache(dashboardData);
+    } catch (e) {
+      // non-fatal: proceed without interrupting response
+      console.warn("RTB dashboard cache set failed", e);
+    }
+
     res.status(200).json({
       success: true,
       data: dashboardData,
+      cached: false,
     });
   } catch (error) {
     next(error);
@@ -424,6 +453,13 @@ router.post("/graduates", async (req, res, next) => {
       "name email location avatar"
     );
 
+    // Invalidate cached dashboard after creating a graduate
+    try {
+      invalidateDashboardCache();
+    } catch (e) {
+      console.warn("Failed to invalidate RTB dashboard cache after create", e);
+    }
+
     res.status(201).json({
       success: true,
       message: "Graduate added to tracking system successfully",
@@ -484,6 +520,13 @@ router.put("/graduates/:id", async (req, res, next) => {
       { new: true, runValidators: true }
     ).populate("user", "name email location avatar");
 
+    // Invalidate dashboard cache after updating graduate data
+    try {
+      invalidateDashboardCache();
+    } catch (e) {
+      console.warn("Failed to invalidate RTB dashboard cache after update", e);
+    }
+
     res.status(200).json({
       success: true,
       message: "Graduate information updated successfully",
@@ -518,6 +561,13 @@ router.put("/graduates/:id/employment", async (req, res, next) => {
     }
 
     await graduate.updateEmploymentStatus(employmentStatus, employmentDetails);
+
+    // Invalidate dashboard cache after employment update
+    try {
+      invalidateDashboardCache();
+    } catch (e) {
+      console.warn("Failed to invalidate RTB dashboard cache after employment update", e);
+    }
 
     res.status(200).json({
       success: true,

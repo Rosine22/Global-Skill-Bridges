@@ -43,9 +43,15 @@ function RegisterPage() {
 
     try {
       const result = await register(formData);
-      
+
       if (result.success) {
-        navigate('/dashboard');
+        // If backend instructs to complete company profile, redirect there
+        const next = (result as { nextStep?: string }).nextStep;
+        if (next === 'company-profile') {
+          navigate('/employer/onboarding');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         setError(result.message || 'Registration failed. Please try again.');
       }

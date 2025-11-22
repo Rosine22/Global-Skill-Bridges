@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
+import { getApiUrl } from '../../config/api';
 import { 
   Globe, 
   Users, 
@@ -17,6 +18,12 @@ function LandingPage() {
     mentors: 0,
     successRate: 0
   });
+  const [targets, setTargets] = useState({
+    graduates: 5000,
+    employers: 500,
+    mentors: 200,
+    successRate: 95
+  });
   
   const sectionRef = useRef(null);
 
@@ -31,38 +38,27 @@ function LandingPage() {
       { threshold: 0.3 }
     );
 
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
+    const el = sectionRef.current;
+    if (el) observer.observe(el);
 
     return () => {
-      if (sectionRef.current) {
-        observer.unobserve(sectionRef.current);
-      }
+      if (el) observer.unobserve(el);
     };
-  }, [isVisible]);
+  }, [isVisible, targets]);
 
   // Counter animation
   useEffect(() => {
     if (!isVisible) return;
-
     const duration = 2000; // 2 seconds
     const steps = 60;
     const interval = duration / steps;
-
-    const targets = {
-      graduates: 5000,
-      employers: 500,
-      mentors: 200,
-      successRate: 95
-    };
 
     let currentStep = 0;
 
     const timer = setInterval(() => {
       currentStep++;
       const progress = currentStep / steps;
-      
+
       setCounts({
         graduates: Math.floor(targets.graduates * progress),
         employers: Math.floor(targets.employers * progress),
@@ -77,6 +73,44 @@ function LandingPage() {
     }, interval);
 
     return () => clearInterval(timer);
+  }, [isVisible]);
+
+  // Fetch live stats from backend public endpoint and update targets
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(getApiUrl('/api/public/stats'));
+        if (!res.ok) {
+          // keep defaults if public stats not available
+          return;
+        }
+        const json = await res.json();
+        if (!mounted || !json?.data) return;
+
+        setTargets({
+          graduates: json.data.totalGraduates || 0,
+          employers: json.data.totalEmployers || 0,
+          mentors: json.data.totalMentors || 0,
+          successRate: json.data.successRate || 0
+        });
+        // trigger animation when section becomes visible
+        if (isVisible) {
+          // reset counts so animation runs toward new targets
+          setCounts({ graduates: 0, employers: 0, mentors: 0, successRate: 0 });
+        }
+      } catch (err) {
+        // ignore and keep defaults
+        console.error('Failed to load public stats', err);
+      }
+    };
+
+    fetchStats();
+
+    const intervalId = setInterval(fetchStats, 60 * 1000); // poll every 60s
+
+    return () => { mounted = false; clearInterval(intervalId); };
   }, [isVisible]);
 
   const steps = [

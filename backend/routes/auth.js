@@ -38,7 +38,7 @@ const generateRefreshToken = (id) => {
 };
 
 // Send Token Response
-const sendTokenResponse = (user, statusCode, res, message = "Success") => {
+const sendTokenResponse = (user, statusCode, res, message = "Success", extra = {}) => {
   const token = generateToken(user._id);
   const refreshToken = generateRefreshToken(user._id);
 
@@ -52,6 +52,28 @@ const sendTokenResponse = (user, statusCode, res, message = "Success") => {
   // Remove password from response
   user.password = undefined;
 
+  const payload = {
+    success: true,
+    message,
+    token,
+    refreshToken,
+    // Include approval and status fields so frontend can make correct routing decisions
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar,
+      isEmailVerified: user.isEmailVerified,
+      profileCompletion: user.profileCompletion,
+      isApproved: user.isApproved,
+      isActive: user.isActive,
+      isBlocked: user.isBlocked,
+      approvalDate: user.approvalDate,
+    },
+    ...extra,
+  };
+
   res
     .status(statusCode)
     .cookie("token", token, options)
@@ -59,26 +81,7 @@ const sendTokenResponse = (user, statusCode, res, message = "Success") => {
       ...options,
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     })
-    .json({
-      success: true,
-      message,
-      token,
-      refreshToken,
-      // Include approval and status fields so frontend can make correct routing decisions
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        avatar: user.avatar,
-        isEmailVerified: user.isEmailVerified,
-        profileCompletion: user.profileCompletion,
-        isApproved: user.isApproved,
-        isActive: user.isActive,
-        isBlocked: user.isBlocked,
-        approvalDate: user.approvalDate,
-      },
-    });
+    .json(payload);
 };
 
 // Validation rules
@@ -247,33 +250,46 @@ router.post("/register", registerValidation, async (req, res, next) => {
       // Don't fail registration if email fails
     }
 
-    // If this is an employer registration, notify admins to review the application
+    // If this is an employer registration, only notify admins if company profile
+    // information has been provided. Otherwise the employer should be directed
+    // to complete the company profile first (frontend will handle redirecting
+    // based on the `nextStep` flag we return below).
     try {
       if (user.role === 'employer') {
-        // Notify admin(s) by email
-        const adminNotifyResult = await emailService.sendNewEmployerNotificationToAdmin(user);
-        if (!adminNotifyResult.success) {
-          console.error('Failed to notify admin about new employer (email):', adminNotifyResult.error);
-        }
+        const hasCompanyProfile = !!(user.companyInfo && user.companyInfo.name);
+        if (hasCompanyProfile) {
+          // Notify admin(s) by email
+          const adminNotifyResult = await emailService.sendNewEmployerNotificationToAdmin(user);
+          if (!adminNotifyResult.success) {
+            console.error('Failed to notify admin about new employer (email):', adminNotifyResult.error);
+          }
 
-        // Create in-app notification for admins (find all admin users)
-        try {
-          const admins = await User.find({ role: { $in: ['admin', 'rtb-admin'] } }).select('_id');
-          await Promise.all(admins.map(a => createNotification(a._id, 'employer-registration', 'New Employer Registration', `A new employer (${user.companyInfo?.name || user.name}) registered and requires approval.`, { userId: user._id })));
-        } catch (notifErr) {
-          console.error('Failed to create in-app admin notification:', notifErr);
+          // Create in-app notification for admins (find all admin users)
+          try {
+            const admins = await User.find({ role: { $in: ['admin', 'rtb-admin'] } }).select('_id');
+            await Promise.all(admins.map(a => createNotification(a._id, 'employer-registration', 'New Employer Registration', `A new employer (${user.companyInfo?.name || user.name}) registered and requires approval.`, { userId: user._id })));
+          } catch (notifErr) {
+            console.error('Failed to create in-app admin notification:', notifErr);
+          }
+        } else {
+          // No company profile yet; do not notify admins. Frontend should redirect
+          // the employer to the company-profile page to complete onboarding.
+          console.log('Employer registered without company profile; skipping admin notification until profile completed.');
         }
-
-        // NOTE: Do NOT send approval/rejection emails to the employer at registration.
-        // The employer should only receive the final approval/rejection email after an admin reviews the application.
-        // We still notify admins (above) so they can review and make the decision.
       }
     } catch (notifyErr) {
       console.error('Error during employer/admin notification:', notifyErr);
       // Do not fail registration if notification fails
     }
 
-    sendTokenResponse(user, 201, res, "User registered successfully");
+    // If employer and company profile is missing, instruct frontend to show
+    // company profile onboarding as the next step.
+    const extra = {};
+    if (user.role === 'employer' && !(user.companyInfo && user.companyInfo.name)) {
+      extra.nextStep = 'company-profile';
+    }
+
+    sendTokenResponse(user, 201, res, "User registered successfully", extra);
   } catch (error) {
     next(error);
   }
@@ -649,6 +665,7 @@ router.put("/profile", protect, async (req, res, next) => {
       "experience",
       "skills",
       "companyInfo",
+      "avatar",
       "mentorInfo",
       "rtbInfo",
       "socialLinks",
@@ -662,10 +679,51 @@ router.put("/profile", protect, async (req, res, next) => {
       }
     });
 
+    // Load existing user to check previous companyInfo state
+    const existingUser = await User.findById(req.user.id).select('-password');
+
     const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
       new: true,
       runValidators: true,
     });
+
+    // If employer completed/updated company profile now, notify admins so they can review
+    try {
+      if (user && user.role === 'employer' && fieldsToUpdate.companyInfo) {
+        const prevHasCompany = !!(existingUser && existingUser.companyInfo && existingUser.companyInfo.name);
+        const newHasCompany = !!(user.companyInfo && user.companyInfo.name);
+        if (!prevHasCompany && newHasCompany) {
+          // Notify admins by email
+          const adminNotifyResult = await emailService.sendNewEmployerNotificationToAdmin(user);
+          if (!adminNotifyResult.success) {
+            console.error('Failed to notify admin about new employer (email) on profile update:', adminNotifyResult.error);
+          }
+
+          // Create in-app admin notifications
+          try {
+            const admins = await User.find({ role: { $in: ['admin', 'rtb-admin'] } }).select('_id');
+            await Promise.all(admins.map(a => createNotification(a._id, 'employer-registration', 'New Employer Registration', `A new employer (${user.companyInfo?.name || user.name}) completed profile and requires approval.`, { userId: user._id })));
+          } catch (notifErr) {
+            console.error('Failed to create in-app admin notification on profile update:', notifErr);
+          }
+        }
+      }
+    } catch (notifyErr) {
+      console.error('Error notifying admins after profile update:', notifyErr);
+    }
+
+    // Recalculate profile completion and save
+    if (user) {
+      try {
+        user.calculateProfileCompletion();
+        await user.save();
+      } catch (e) {
+        console.error('Failed to save profile completion after update:', e);
+      }
+    }
+
+    // Return updated user
+    return res.status(200).json({ success: true, data: user });
   } catch (error) {
     next(error);
   }

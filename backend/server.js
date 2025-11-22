@@ -19,6 +19,7 @@ const notificationRoutes = require("./routes/notifications");
 const adminRoutes = require("./routes/admin");
 const rtbRoutes = require("./routes/rtb");
 const analyticsRoutes = require("./routes/analytics");
+const publicRoutes = require("./routes/public");
 
 // Import middleware
 const errorHandler = require("./middleware/errorHandler");
@@ -92,6 +93,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/rtb", rtbRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/public", publicRoutes);
 
 // Welcome Route
 app.get("/", (req, res) => {
