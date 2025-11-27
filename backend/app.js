@@ -51,14 +51,6 @@ app.post('/upload', upload.single('file'), (req, res) => {
 
 app.use('/uploads', express.static('uploads'));
 
-
-app.use(cors({
-  origin: 'https://global-skills-br.netlify.app/', 
-  methods: ['GET','POST','PUT','DELETE'],
-  credentials: true
-}));
-
-
 // Trust proxy (important for rate limiting behind proxies)
 app.set('trust proxy', 1);
 
@@ -134,28 +126,23 @@ app.use('/api/', limiter);
 const corsOptions = {
   origin: function (origin, callback) {
     // In development, allow any origin to ease local testing (Vite, Postman, etc.).
-    // In production we enforce a whitelist below.
     if (process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }
 
-    // Normalize configured frontend URL to avoid trailing-slash mismatches
-    const rawFront = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const frontendUrl = String(rawFront).replace(/\/+$/, '');
-
-    // Allow requests from your frontend and other authorized origins
+    // Production whitelist
     const allowedOrigins = [
-      frontendUrl,
-      'http://localhost:5173', // Vite dev server
-      'http://127.0.0.1:3000',
+      'https://global-skills-br.netlify.app',
+      'http://localhost:5173',
+      'http://localhost:3000',
       'http://127.0.0.1:5173',
-    ].map(o => String(o).replace(/\/+$/, ''));
+      'http://127.0.0.1:3000',
+    ];
 
     // Allow requests with no origin (mobile apps, Postman, server-to-server)
     if (!origin) return callback(null, true);
 
-    const normalizedOrigin = String(origin).replace(/\/+$/, '');
-    if (allowedOrigins.includes(normalizedOrigin)) {
+    if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
