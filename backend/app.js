@@ -11,7 +11,7 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 require('dotenv').config();
 
-// Import routes
+
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const jobRoutes = require('./routes/jobs');
@@ -25,23 +25,23 @@ const rtbRoutes = require('./routes/rtb');
 const analyticsRoutes = require('./routes/analytics');
 const employersRoutes = require('./routes/employers');
 
-// Import middleware
+
 const errorHandler = require('./middleware/errorHandler');
 const notFound = require('./middleware/notFound');
 
 const app = express();
 
-// Configure storage
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Directory where files will be saved
+    cb(null, 'uploads/'); 
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`); // Unique file name
+    cb(null, `${Date.now()}-${file.originalname}`);
   }
 });
 
-// Initialize Multer
+
 const upload = multer({ storage: storage });
 
 // Route to handle file upload
