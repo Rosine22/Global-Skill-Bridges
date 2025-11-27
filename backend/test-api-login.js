@@ -10,9 +10,9 @@ const testLoginAPI = async () => {
     };
     
     console.log('Testing credentials:', credentials);
-    console.log('API URL: http://localhost:5000/api/auth/login\n');
+    console.log('API URL: https://global-skill-bridges-1.onrender.com/api/auth/login\n');
     
-    const response = await axios.post('http://localhost:5000/api/auth/login', credentials);
+    const response = await axios.post('https://global-skill-bridges-1.onrender.com/api/auth/login', credentials);
     
     console.log('✅ LOGIN SUCCESSFUL!');
     console.log('Response status:', response.status);
