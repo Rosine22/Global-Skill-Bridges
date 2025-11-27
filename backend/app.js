@@ -51,7 +51,6 @@ app.post('/upload', upload.single('file'), (req, res) => {
 
 app.use('/uploads', express.static('uploads'));
 
-const cors = require('cors');
 
 app.use(cors({
   origin: 'https://global-skills-br.netlify.app/', 
