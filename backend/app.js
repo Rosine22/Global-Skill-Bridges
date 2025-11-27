@@ -51,6 +51,14 @@ app.post('/upload', upload.single('file'), (req, res) => {
 
 app.use('/uploads', express.static('uploads'));
 
+const cors = require('cors');
+
+app.use(cors({
+  origin: 'https://global-skills-br.netlify.app/', 
+  methods: ['GET','POST','PUT','DELETE'],
+  credentials: true
+}));
+
 
 // Trust proxy (important for rate limiting behind proxies)
 app.set('trust proxy', 1);
@@ -199,7 +207,7 @@ app.get('/health', async (req, res) => {
   });
 });
 
-// Database status endpoint
+
 app.get('/api/db-status', async (req, res) => {
   try {
     const dbState = mongoose.connection.readyState;
@@ -224,7 +232,7 @@ app.get('/api/db-status', async (req, res) => {
   }
 });
 
-// Welcome Route
+
 app.get('/', (req, res) => {
   res.json({
     message: '🌟 Welcome to Global Skills Bridge API',
@@ -260,9 +268,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/rtb', rtbRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/employers', employersRoutes);
-// NOTE: removed an accidental incomplete upload route declaration that caused
-// a syntax/runtime error when present. File uploads are handled by `/upload` above.
-// Swagger API Documentation
+
+
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'Global Skills Bridge API Documentation',
@@ -277,17 +284,16 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   }
 }));
 
-// Swagger JSON endpoint
 app.get('/api/docs.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerSpec);
 });
 
-// Error Handling Middleware (must be after routes)
+
 app.use("*", notFound);
 app.use(errorHandler);
 
-// Graceful Shutdown
+
 const gracefulShutdown = async (signal) => {
   console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
   
@@ -305,22 +311,20 @@ const gracefulShutdown = async (signal) => {
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-// Unhandled Promise Rejection Handler
+
 process.on('unhandledRejection', (err, promise) => {
-  console.error('💥 Unhandled Promise Rejection:', err.message);
-  // Close server & exit process
+  console.error(' Unhandled Promise Rejection:', err.message);
   process.exit(1);
 });
 
-// Start Server
+
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
-    // Connect to database first
+  
     await connectDB();
     
-    // Start the server
     const server = app.listen(PORT, () => {
       console.log(`
 🚀 Global Skills Bridge API Server Started Successfully!
@@ -334,7 +338,7 @@ const startServer = async () => {
       `);
     });
 
-    // Handle server errors
+    
     server.on('error', (error) => {
       if (error.syscall !== 'listen') {
         throw error;
