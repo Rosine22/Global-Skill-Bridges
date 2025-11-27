@@ -968,6 +968,104 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       }
     });
     
+    const fetchMentors = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.log('No token found, using mock mentors');
+          setMentors(mockMentors);
+          return;
+        }
+
+        const response = await fetch('/api/mentorship/mentors', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            const formattedMentors: Mentor[] = result.data.map((mentor: any) => ({
+              id: mentor._id,
+              name: mentor.name,
+              title: mentor.mentorInfo?.title || 'Mentor',
+              company: mentor.mentorInfo?.company || 'N/A',
+              expertise: mentor.mentorInfo?.specializations || [],
+              location: `${mentor.location?.city || ''}, ${mentor.location?.country || ''}`.trim(),
+              experience: mentor.mentorInfo?.yearsOfExperience ? `${mentor.mentorInfo.yearsOfExperience}+ years` : 'N/A',
+              rating: mentor.stats?.averageRating || 0,
+              reviews: mentor.stats?.totalReviews || 0,
+              bio: mentor.mentorInfo?.bio || 'Experienced professional',
+              currentRole: mentor.mentorInfo?.currentRole || mentor.mentorInfo?.title || 'Mentor',
+              avatar: mentor.avatar?.url,
+              achievements: mentor.mentorInfo?.achievements || [],
+              languages: mentor.mentorInfo?.languages || ['English'],
+              availability: mentor.mentorInfo?.availability || 'Flexible',
+              sessionTypes: mentor.mentorInfo?.sessionTypes || ['Video Call'],
+              responseTime: 'Usually responds within 24-48 hours',
+              totalMentees: mentor.activeMenteeCount || 0,
+              successStories: mentor.stats?.mentoringSessions || 0
+            }));
+            console.log('Fetched mentors from backend:', formattedMentors.length);
+            setMentors(formattedMentors);
+          } else {
+            console.log('No mentors found, using mock data');
+            setMentors(mockMentors);
+          }
+        } else {
+          console.log('Failed to fetch mentors, using mock data');
+          setMentors(mockMentors);
+        }
+      } catch (error) {
+        console.error('Error fetching mentors:', error);
+        setMentors(mockMentors);
+      }
+    };
+
+    fetchMentors();
+    
+    const fetchMentorshipRequests = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.log('No token found, skipping mentorship requests fetch');
+          return;
+        }
+
+        const response = await fetch('/api/mentorship', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            const formattedRequests: MentorshipRequest[] = result.data.map((req: { _id: string; mentor: { _id?: string; name?: string } | string; mentee: { _id?: string; name?: string } | string; field: string; message: string; status: MentorshipRequest['status']; createdAt: string }) => ({
+              id: req._id,
+              mentorId: typeof req.mentor === 'object' ? req.mentor._id || '' : req.mentor,
+              mentorName: typeof req.mentor === 'object' ? req.mentor.name || 'Mentor' : 'Mentor',
+              seekerId: typeof req.mentee === 'object' ? req.mentee._id || '' : req.mentee,
+              seekerName: typeof req.mentee === 'object' ? req.mentee.name || 'Seeker' : 'Seeker',
+              field: req.field,
+              message: req.message,
+              status: req.status,
+              requestDate: new Date(req.createdAt).toISOString().split('T')[0]
+            }));
+            console.log('Fetched mentorship requests from backend:', formattedRequests.length);
+            setMentorshipRequests(formattedRequests);
+          }
+        } else {
+          console.log('Failed to fetch mentorship requests');
+        }
+      } catch (error) {
+        console.error('Error fetching mentorship requests:', error);
+      }
+    };
+
+    fetchMentorshipRequests();
+    
     console.log('UserContext initialized with mock data:');
     console.log('Jobs:', mockJobs.length);
   }, []);
@@ -1104,20 +1202,53 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     ));
   };
 
-  const requestMentorship = (mentorId: string, field: string, message: string) => {
-    const newRequest: MentorshipRequest = {
-      id: Date.now().toString(),
-      mentorId,
-      mentorName: 'Mentor Name', 
-      seekerId: '1', 
-      seekerName: 'Current User',
-      field,
-      message,
-      status: 'pending',
-      requestDate: new Date().toISOString().split('T')[0]
-    };
+  const requestMentorship = async (mentorId: string, field: string, message: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No auth token found');
+        return;
+      }
 
-    setMentorshipRequests(prev => [newRequest, ...prev]);
+      const response = await fetch('/api/mentorship/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          mentorId,
+          field,
+          message,
+          timeCommitment: 'flexible',
+          duration: '3-months',
+          preferredMeetingType: 'video-call'
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const mentor = mentors.find(m => m.id === mentorId);
+        const newRequest: MentorshipRequest = {
+          id: result.data._id,
+          mentorId,
+          mentorName: mentor?.name || 'Mentor Name',
+          seekerId: result.data.mentee,
+          seekerName: user?.name || 'Current User',
+          field,
+          message,
+          status: result.data.status,
+          requestDate: new Date(result.data.createdAt).toISOString().split('T')[0]
+        };
+        setMentorshipRequests(prev => [newRequest, ...prev]);
+        console.log('Mentorship request sent successfully');
+      } else {
+        const error = await response.json();
+        console.error('Failed to send mentorship request:', error.message);
+      }
+    } catch (error) {
+      console.error('Error sending mentorship request:', error);
+    }
   };
 
   const updateApplicationStatus = (applicationId: string, status: Application['status']) => {
@@ -1156,35 +1287,66 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return newConversation.id;
   };
 
-  const sendMessage = (receiverId: string, receiverName: string, receiverRole: string, content: string) => {
-    const conversationId = createOrGetConversation(receiverId, receiverName, receiverRole);
-    
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      conversationId,
-      senderId: 'user-1', 
-      senderName: 'Current User', 
-      senderRole: 'job-seeker', 
-      receiverId,
-      receiverName,
-      receiverRole,
-      content,
-      timestamp: new Date().toISOString(),
-      read: false,
-      messageType: 'text'
-    };
+  const sendMessage = async (receiverId: string, receiverName: string, receiverRole: string, content: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No auth token found');
+        return;
+      }
 
-    setMessages(prev => [...prev, newMessage]);
-    
-    setConversations(prev => prev.map(conv => 
-      conv.id === conversationId 
-        ? { 
-            ...conv, 
-            lastMessage: newMessage,
-            updatedAt: new Date().toISOString()
-          }
-        : conv
-    ));
+      const response = await fetch('/api/messages/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          recipient: receiverId,
+          content,
+          messageType: 'text'
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const conversationId = createOrGetConversation(receiverId, receiverName, receiverRole);
+        
+        const newMessage: Message = {
+          id: result.data._id,
+          conversationId,
+          senderId: result.data.sender._id,
+          senderName: result.data.sender.name,
+          senderRole: user?.role || 'job-seeker',
+          receiverId: result.data.recipient._id,
+          receiverName: result.data.recipient.name,
+          receiverRole: receiverRole,
+          content: result.data.content,
+          timestamp: result.data.createdAt,
+          read: result.data.read,
+          messageType: result.data.messageType
+        };
+
+        setMessages(prev => [...prev, newMessage]);
+        
+        setConversations(prev => prev.map(conv => 
+          conv.id === conversationId 
+            ? { 
+                ...conv, 
+                lastMessage: newMessage,
+                updatedAt: new Date().toISOString()
+              }
+            : conv
+        ));
+        
+        console.log('Message sent successfully');
+      } else {
+        const error = await response.json();
+        console.error('Failed to send message:', error.message);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   };
 
   const markMessageAsRead = (messageId: string) => {
