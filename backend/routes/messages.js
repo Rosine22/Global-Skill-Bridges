@@ -52,7 +52,7 @@ router.get('/conversations', async (req, res, next) => {
                 {
                   $and: [
                     { $eq: ['$recipient', req.user._id] },
-                    { $eq: ['$read', false] }
+                    { $eq: ['$isRead', false] }
                   ]
                 },
                 1,
@@ -90,7 +90,7 @@ router.get('/conversations', async (req, res, next) => {
             content: '$lastMessage.content',
             messageType: '$lastMessage.messageType',
             createdAt: '$lastMessage.createdAt',
-            read: '$lastMessage.read',
+            read: '$lastMessage.isRead',
             sender: '$lastMessage.sender',
             recipient: '$lastMessage.recipient'
           },
@@ -192,10 +192,10 @@ router.get('/conversation/:userId', async (req, res, next) => {
       {
         sender: userId,
         recipient: req.user._id,
-        read: false
+        isRead: false
       },
       {
-        read: true,
+        isRead: true,
         readAt: new Date()
       }
     );
@@ -264,6 +264,32 @@ router.post('/send', [
       });
     }
 
+    // Check if users have accepted mentorship (for mentor-mentee messaging)
+    // Allow messaging if:
+    // 1. One is mentor and one is job-seeker AND they have accepted mentorship
+    // 2. Or if they're both employers/job-seekers (for job applications)
+    // 3. Or if admin/rtb-admin (can message anyone)
+    const isMentorMenteePair = 
+      (req.user.role === 'mentor' && recipientUser.role === 'job-seeker') ||
+      (req.user.role === 'job-seeker' && recipientUser.role === 'mentor');
+    
+    if (isMentorMenteePair) {
+      const MentorshipRequest = require('../models/MentorshipRequest');
+      const acceptedMentorship = await MentorshipRequest.findOne({
+        $or: [
+          { mentor: req.user._id, mentee: recipient, status: { $in: ['accepted', 'active'] } },
+          { mentor: recipient, mentee: req.user._id, status: { $in: ['accepted', 'active'] } }
+        ]
+      });
+
+      if (!acceptedMentorship && !['admin', 'rtb-admin'].includes(req.user.role)) {
+        return res.status(403).json({
+          success: false,
+          message: 'You can only message mentors/mentees after mentorship has been accepted'
+        });
+      }
+    }
+
     const messageData = {
       sender: req.user._id,
       recipient,
@@ -318,8 +344,8 @@ router.put('/:messageId/read', async (req, res, next) => {
       });
     }
 
-    if (!message.read) {
-      message.read = true;
+    if (!message.isRead) {
+      message.isRead = true;
       message.readAt = new Date();
       await message.save();
     }
@@ -346,10 +372,10 @@ router.put('/conversation/:userId/read-all', async (req, res, next) => {
       {
         sender: userId,
         recipient: req.user._id,
-        read: false
+        isRead: false
       },
       {
-        read: true,
+        isRead: true,
         readAt: new Date()
       }
     );
@@ -480,7 +506,7 @@ router.get('/unread-count', async (req, res, next) => {
   try {
     const unreadCount = await Message.countDocuments({
       recipient: req.user._id,
-      read: false
+      isRead: false
     });
 
     // Get unread count by conversation
@@ -488,7 +514,7 @@ router.get('/unread-count', async (req, res, next) => {
       {
         $match: {
           recipient: req.user._id,
-          read: false
+          isRead: false
         }
       },
       {

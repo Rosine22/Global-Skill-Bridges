@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useUserContext } from '../../contexts/UserContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
+import { API_BASE_URL, getAuthHeaders } from '../../config/api';
 import DashboardLayout from '../../components/DashboardLayout';
 import { 
   ArrowLeft,
@@ -16,10 +18,13 @@ import {
   Clock,
   CalendarDays
 } from 'lucide-react';
+import { Mentor } from '../../contexts/UserContext';
 
 interface MentorProfile {
   id: string;
   name: string;
+  email?: string;
+  phone?: string;
   title: string;
   company: string;
   location: string;
@@ -35,6 +40,8 @@ interface MentorProfile {
   responseTime: string;
   totalMentees: number;
   successStories: number;
+  linkedInProfile?: string;
+  education?: any[];
 }
 
 interface AvailabilitySlot {
@@ -44,10 +51,64 @@ interface AvailabilitySlot {
   duration: number; // in minutes
 }
 
+interface BackendMentor {
+  _id: string;
+  name: string;
+  email?: string;
+  bio?: string;
+  avatar?: {
+    url: string;
+    public_id: string;
+  };
+  mentorInfo?: {
+    specializations?: string[];
+    yearsOfExperience?: number;
+    biography?: string;
+    achievements?: string[];
+    languages?: string[];
+    availability?: any[];
+    linkedInProfile?: string;
+  };
+  location?: {
+    city?: string;
+    country?: string;
+    address?: string;
+  };
+  phone?: string;
+  skills?: Array<{
+    name?: string;
+    skill?: {
+      name: string;
+    };
+  }>;
+  stats?: {
+    mentoringSessions?: number;
+    rating?: number;
+    reviews?: number;
+  };
+  experience?: Array<{
+    position?: string;
+    company?: string;
+    isCurrent?: boolean;
+    startDate?: string;
+    endDate?: string;
+    description?: string;
+  }>;
+  education?: Array<{
+    institution?: string;
+    degree?: string;
+    field?: string;
+  }>;
+}
+
 function MentorProfilePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { requestMentorship, createOrGetConversation, getMentorById, bookSession } = useUserContext();
+  const { user } = useAuth();
+  const { requestMentorship, createOrGetConversation, bookSession, mentorshipRequests } = useUserContext();
+  const [mentor, setMentor] = useState<Mentor | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -62,6 +123,180 @@ function MentorProfilePage() {
     description: '',
     duration: 60
   });
+  const notify = useNotification();
+
+  // Check if there's any mentorship request with this mentor (pending, accepted, active, completed, declined)
+  const existingMentorshipRequest = mentor && user
+    ? mentorshipRequests.find(
+        req => req.mentorId === mentor.id && 
+               req.seekerId === user.id
+      )
+    : null;
+
+  // Fetch mentor from backend
+  const fetchMentor = useCallback(async () => {
+    if (!id) {
+      setError('Mentor ID is required');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      // Add cache-busting timestamp to ensure fresh data
+      const response = await fetch(`${API_BASE_URL}/api/users/${id}?t=${Date.now()}`, {
+        headers: getAuthHeaders(),
+        cache: 'no-cache',
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Mentor not found');
+        }
+        throw new Error('Failed to fetch mentor');
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        const backendMentor: BackendMentor = data.data;
+        
+        // Debug: Log mentor data to help troubleshoot
+        console.log('Mentor data received:', {
+          id: backendMentor._id,
+          name: backendMentor.name,
+          role: data.data.role,
+          mentorInfo: backendMentor.mentorInfo,
+          yearsOfExperience: backendMentor.mentorInfo?.yearsOfExperience,
+          experience: backendMentor.experience
+        });
+        
+        // Check if user is a mentor
+        if (backendMentor.mentorInfo || data.data.role === 'mentor') {
+          // Get current role from experience
+          const currentExperience = backendMentor.experience?.find(exp => exp.isCurrent) || backendMentor.experience?.[0];
+          const currentRole = currentExperience 
+            ? `${currentExperience.position || 'Professional'} at ${currentExperience.company || 'Company'}`
+            : 'Mentor';
+
+          // Get location string
+          const locationStr = backendMentor.location 
+            ? `${backendMentor.location.city || ''}${backendMentor.location.city && backendMentor.location.country ? ', ' : ''}${backendMentor.location.country || ''}`
+            : 'Location not specified';
+
+          // Get expertise from specializations or skills
+          const expertise = backendMentor.mentorInfo?.specializations || 
+            backendMentor.skills?.map(s => s.name || s.skill?.name).filter(Boolean) || 
+            [];
+
+          // Get experience string - check multiple sources
+          let experienceStr = 'Experience not specified';
+          
+          // First, check mentorInfo.yearsOfExperience (including 0)
+          const yearsOfExp = backendMentor.mentorInfo?.yearsOfExperience;
+          if (yearsOfExp !== null && yearsOfExp !== undefined && yearsOfExp !== '') {
+            // Handle both number and string values
+            const years = typeof yearsOfExp === 'string' ? parseInt(yearsOfExp, 10) : yearsOfExp;
+            if (!isNaN(years) && years >= 0) {
+              experienceStr = `${years}+ years`;
+            }
+          } 
+          
+          // Fallback: Calculate from experience array if yearsOfExperience not available
+          if (experienceStr === 'Experience not specified' && backendMentor.experience && backendMentor.experience.length > 0) {
+            const now = new Date();
+            let totalYears = 0;
+            
+            backendMentor.experience.forEach(exp => {
+              if (exp.startDate) {
+                const startDate = new Date(exp.startDate);
+                const endDate = exp.endDate ? new Date(exp.endDate) : now;
+                const years = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365);
+                totalYears = Math.max(totalYears, years);
+              }
+            });
+            
+            if (totalYears > 0) {
+              experienceStr = `${Math.round(totalYears)}+ years`;
+            }
+          }
+
+          // Get bio
+          const bio = backendMentor.bio || 
+            backendMentor.mentorInfo?.biography || 
+            (expertise.length > 0 
+              ? `Experienced professional with expertise in ${expertise.slice(0, 2).join(' and ')}.`
+              : 'Experienced professional ready to help you grow your career.');
+
+          const transformedMentor: Mentor & { email?: string; phone?: string; linkedInProfile?: string; education?: any[] } = {
+            id: backendMentor._id,
+            name: backendMentor.name,
+            email: backendMentor.email,
+            phone: backendMentor.phone,
+            title: currentExperience?.position || 'Mentor',
+            company: currentExperience?.company || '',
+            expertise: expertise,
+            location: locationStr,
+            experience: experienceStr,
+            rating: backendMentor.stats?.rating || 4.5,
+            reviews: backendMentor.stats?.reviews || 0,
+            bio: bio,
+            currentRole: currentRole,
+            avatar: backendMentor.avatar?.url,
+            achievements: backendMentor.mentorInfo?.achievements || [],
+            languages: backendMentor.mentorInfo?.languages || [],
+            availability: backendMentor.mentorInfo?.availability ? 'Available' : 'Not specified',
+            sessionTypes: ['Video Call', 'In-Person'],
+            responseTime: 'Within 24 hours',
+            totalMentees: 0,
+            successStories: 0,
+            linkedInProfile: backendMentor.mentorInfo?.linkedInProfile,
+            education: backendMentor.education || [],
+          };
+
+          setMentor(transformedMentor);
+        } else {
+          setError('User is not a mentor');
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching mentor:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load mentor');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  // Fetch mentor data on mount and when id changes
+  useEffect(() => {
+    fetchMentor();
+  }, [fetchMentor]);
+
+  // Refresh data when page becomes visible (e.g., after editing profile)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && id) {
+        // Refresh mentor data when page becomes visible
+        fetchMentor();
+      }
+    };
+
+    const handleFocus = () => {
+      if (id) {
+        // Refresh mentor data when window gains focus
+        fetchMentor();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [id, fetchMentor]);
 
   // Generate mock availability data
   useEffect(() => {
@@ -105,16 +340,23 @@ function MentorProfilePage() {
     generateAvailability();
   }, []);
 
-  // Get mentor profile from context
-  const mentor = getMentorById(id || '1');
-  const notify = useNotification();
-  
-  if (!mentor) {
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-4xl mx-auto text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <p className="text-gray-500 mt-4">Loading mentor profile...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error || !mentor) {
     return (
       <DashboardLayout>
         <div className="max-w-4xl mx-auto text-center py-12">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Mentor Not Found</h1>
-          <p className="text-gray-600 mb-6">The mentor you're looking for doesn't exist.</p>
+          <p className="text-gray-600 mb-6">{error || "The mentor you are looking for does not exist."}</p>
           <button 
             onClick={() => navigate('/mentorship')}
             className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700"
@@ -129,6 +371,8 @@ function MentorProfilePage() {
   const mentorProfile: MentorProfile = {
     id: mentor.id,
     name: mentor.name,
+    email: (mentor as any).email,
+    phone: (mentor as any).phone,
     title: mentor.title,
     company: mentor.company,
     location: mentor.location,
@@ -143,7 +387,9 @@ function MentorProfilePage() {
     sessionTypes: mentor.sessionTypes,
     responseTime: mentor.responseTime,
     totalMentees: mentor.totalMentees,
-    successStories: mentor.successStories
+    successStories: mentor.successStories,
+    linkedInProfile: (mentor as any).linkedInProfile,
+    education: (mentor as any).education || [],
   };
 
   const getAvailableDates = () => {
@@ -185,17 +431,34 @@ function MentorProfilePage() {
   const handleStartConversation = () => {
     // Create or get existing conversation with the mentor
     createOrGetConversation(mentorProfile.id, mentorProfile.name, 'mentor');
-    // Navigate to messages page
-    navigate('/messages');
+    // Navigate to messages page with userId parameter to auto-open conversation
+    navigate(`/messages?userId=${mentorProfile.id}`);
   };
 
-  const handleRequestSubmit = (e: React.FormEvent) => {
+  const handleRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    requestMentorship(mentorProfile.id, requestForm.field, requestForm.message);
-    setShowRequestForm(false);
-    setRequestForm({ field: '', message: '' });
-  // Show success message or redirect
-  notify.success('Mentorship request sent successfully!');
+    
+    // Prevent submitting if a request already exists
+    if (existingMentorshipRequest) {
+      notify.error('You have already sent a mentorship request to this mentor');
+      setShowRequestForm(false);
+      return;
+    }
+    
+    if (!requestForm.field || !requestForm.message) {
+      notify.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      await requestMentorship(mentorProfile.id, requestForm.field, requestForm.message);
+      setShowRequestForm(false);
+      setRequestForm({ field: '', message: '' });
+      notify.success('Mentorship request sent successfully!');
+    } catch (error) {
+      console.error('Error sending mentorship request:', error);
+      notify.error(error instanceof Error ? error.message : 'Failed to send mentorship request');
+    }
   };
 
   const reviews = [
@@ -245,18 +508,29 @@ function MentorProfilePage() {
                   <h1 className="text-3xl font-bold mb-2">{mentorProfile.name}</h1>
                   <p className="text-xl text-primary-100 mb-2">{mentorProfile.title}</p>
                   <p className="text-primary-100 mb-3">{mentorProfile.company}</p>
-                  <div className="flex items-center space-x-4 text-primary-100">
+                  <div className="flex flex-wrap items-center gap-4 text-primary-100">
+                    {mentorProfile.email && (
+                      <div className="flex items-center">
+                        <span className="text-sm">{mentorProfile.email}</span>
+                      </div>
+                    )}
+                    {mentorProfile.phone && (
+                      <div className="flex items-center">
+                        <Phone className="h-4 w-4 mr-1" />
+                        <span className="text-sm">{mentorProfile.phone}</span>
+                      </div>
+                    )}
                     <div className="flex items-center">
                       <MapPin className="h-4 w-4 mr-1" />
-                      {mentorProfile.location}
+                      <span className="text-sm">{mentorProfile.location}</span>
                     </div>
                     <div className="flex items-center">
                       <Star className="h-4 w-4 mr-1 text-yellow-300" />
-                      {mentorProfile.rating} ({mentorProfile.reviews} reviews)
+                      <span className="text-sm">{mentorProfile.rating.toFixed(1)} ({mentorProfile.reviews} reviews)</span>
                     </div>
                     <div className="flex items-center">
                       <User className="h-4 w-4 mr-1" />
-                      {mentorProfile.totalMentees} mentees
+                      <span className="text-sm">{mentorProfile.totalMentees} mentees</span>
                     </div>
                   </div>
                 </div>
@@ -267,13 +541,41 @@ function MentorProfilePage() {
                   <div className="text-sm text-primary-100">Success Stories</div>
                 </div>
                 <div className="flex space-x-3">
-                  <button
-                    onClick={() => setShowRequestForm(true)}
-                    className="bg-white text-primary-600 px-4 py-2 rounded-lg font-semibold hover:bg-primary-50 transition-colors flex items-center text-sm"
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    Request Mentorship
-                  </button>
+                  {existingMentorshipRequest ? (
+                    <button
+                      disabled
+                      className={`px-4 py-2 rounded-lg font-semibold transition-colors flex items-center text-sm cursor-default ${
+                        existingMentorshipRequest.status === 'completed' 
+                          ? 'bg-gray-100 text-gray-700'
+                          : existingMentorshipRequest.status === 'active'
+                          ? 'bg-green-100 text-green-700'
+                          : existingMentorshipRequest.status === 'accepted'
+                          ? 'bg-green-100 text-green-700'
+                          : existingMentorshipRequest.status === 'declined'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                      }`}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      {existingMentorshipRequest.status === 'completed' 
+                        ? 'Mentorship Completed' 
+                        : existingMentorshipRequest.status === 'active'
+                        ? 'Mentorship Active'
+                        : existingMentorshipRequest.status === 'accepted'
+                        ? 'Mentorship Accepted'
+                        : existingMentorshipRequest.status === 'declined'
+                        ? 'Request Declined'
+                        : 'Request Pending'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setShowRequestForm(true)}
+                      className="bg-white text-primary-600 px-4 py-2 rounded-lg font-semibold hover:bg-primary-50 transition-colors flex items-center text-sm"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      Request Mentorship
+                    </button>
+                  )}
                   <button
                     onClick={() => setShowBookingModal(true)}
                     className="bg-secondary-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-secondary-700 transition-colors flex items-center text-sm"
@@ -317,6 +619,40 @@ function MentorProfilePage() {
                 <div className="text-sm text-purple-700">Average Rating</div>
               </div>
             </div>
+
+            {/* Contact Information */}
+            {(mentorProfile.email || mentorProfile.phone || mentorProfile.linkedInProfile) && (
+              <div className="mb-8 p-4 bg-gray-50 rounded-lg">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Contact Information</h2>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {mentorProfile.email && (
+                    <div className="flex items-center">
+                      <span className="text-sm font-medium text-gray-700 mr-2">Email:</span>
+                      <span className="text-sm text-gray-600">{mentorProfile.email}</span>
+                    </div>
+                  )}
+                  {mentorProfile.phone && (
+                    <div className="flex items-center">
+                      <Phone className="h-4 w-4 text-gray-500 mr-2" />
+                      <span className="text-sm font-medium text-gray-700 mr-2">Phone:</span>
+                      <span className="text-sm text-gray-600">{mentorProfile.phone}</span>
+                    </div>
+                  )}
+                  {mentorProfile.linkedInProfile && (
+                    <div className="flex items-center">
+                      <a 
+                        href={mentorProfile.linkedInProfile} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:text-blue-800"
+                      >
+                        LinkedIn Profile
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* About Section */}
             <div className="mb-8">
@@ -558,7 +894,7 @@ function MentorProfilePage() {
         )}
 
         {/* Request Mentorship Modal */}
-        {showRequestForm && (
+        {showRequestForm && !existingMentorshipRequest && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b">
@@ -577,9 +913,20 @@ function MentorProfilePage() {
                     required
                   >
                     <option value="">Select a field</option>
-                    {mentorProfile.expertise.map((exp) => (
-                      <option key={exp} value={exp}>{exp}</option>
-                    ))}
+                    <option value="software-development">Software Development</option>
+                    <option value="electrical-engineering">Electrical Engineering</option>
+                    <option value="mechanical-engineering">Mechanical Engineering</option>
+                    <option value="civil-engineering">Civil Engineering</option>
+                    <option value="automotive-technology">Automotive Technology</option>
+                    <option value="construction">Construction</option>
+                    <option value="healthcare">Healthcare</option>
+                    <option value="hospitality">Hospitality</option>
+                    <option value="agriculture">Agriculture</option>
+                    <option value="manufacturing">Manufacturing</option>
+                    <option value="career-guidance">Career Guidance</option>
+                    <option value="interview-preparation">Interview Preparation</option>
+                    <option value="skill-development">Skill Development</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
 

@@ -32,7 +32,7 @@ class EmailService {
 
   // Use deployed frontend URL as the default fallback so emails/links point to production
   // Normalize to remove any trailing slash so templates build correct links
-  const rawBaseUrl = process.env.FRONTEND_URL || process.env.CLIENT_BASE_URL || 'https://global-skills-br.netlify.app';
+  const rawBaseUrl = process.env.FRONTEND_URL || process.env.CLIENT_BASE_URL || 'https://global-skills-b.netlify.app';
   this.baseUrl = String(rawBaseUrl).replace(/\/+$/, '');
   }
 
